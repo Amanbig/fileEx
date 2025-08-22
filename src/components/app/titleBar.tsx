@@ -1,13 +1,19 @@
-const TitleBar = ()=>{
-    return (
-        <div className="w-full flex items-center justify-between bg-gray-800 text-white drag">
-            <h2 className="text-lg font-semibold">File Explorer</h2>
-            <div className="no-drag">
-                <button className=" hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-l">X</button>
-                <button className=" hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-r">Y</button>
-            </div>
-        </div>
-    )
-}
+import { Button } from "../ui/button";
+import { RxCross2 } from "react-icons/rx";
+import { VscChromeMinimize } from "react-icons/vsc";
+import { IoMdSquareOutline } from "react-icons/io";
 
-export default TitleBar;
+export default function TitleBar(){
+    return (
+        <div className="flex flex-row items-center justify-between pl-2 drag">
+        <div>
+            <p>FileEx</p>
+        </div>
+        <div className="no-drag">
+            <Button variant="ghost"><VscChromeMinimize /></Button>
+            <Button variant="ghost"><IoMdSquareOutline /></Button>
+            <Button variant="ghost"><RxCross2 /></Button>
+        </div>
+        </div>
+    );
+}
