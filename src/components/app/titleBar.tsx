@@ -3,6 +3,7 @@ import { RxCross2 } from "react-icons/rx";
 import { VscChromeMinimize } from "react-icons/vsc";
 import { IoMdSquareOutline } from "react-icons/io";
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import ThemeToggle from "./themeToggle";
 
 const appWindow = getCurrentWindow();
 
@@ -13,6 +14,7 @@ export default function TitleBar() {
                 <p>FileEx</p>
             </div>
             <div className="no-drag">
+                <ThemeToggle />
                 <Button variant="ghost" onClick={() => appWindow.minimize()}><VscChromeMinimize /></Button>
                 <Button variant="ghost" onClick={async () => {
                     if (await appWindow.isMaximized()) {
