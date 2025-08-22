@@ -416,34 +416,35 @@ export function FileStructure() {
 
   return (
     <div className="w-full h-full flex flex-col p-4">
-      {/* Path Navigation Bar */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Path Navigation and Search Bar */}
+      <div className="flex items-center gap-4 py-4 flex-shrink-0">
+        {/* Path Input */}
+        <div className="flex items-center gap-2 flex-[2]">
+          <Input
+            placeholder="Path: C:\Users\Documents"
+            value={currentPath}
+            onChange={(event) => setCurrentPath(event.target.value)}
+            className="flex-1 font-mono text-sm"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                // Handle path navigation here
+                console.log('Navigate to:', currentPath)
+              }
+            }}
+          />
+          <Button variant="outline" size="sm">
+            Go
+          </Button>
+        </div>
+        
+        {/* Search Input */}
         <Input
-          placeholder="Path: C:\Users\Documents"
-          value={currentPath}
-          onChange={(event) => setCurrentPath(event.target.value)}
-          className="flex-1 font-mono text-sm"
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              // Handle path navigation here
-              console.log('Navigate to:', currentPath)
-            }
-          }}
-        />
-        <Button variant="outline" size="sm">
-          Go
-        </Button>
-      </div>
-      
-      {/* Search and Controls Bar */}
-      <div className="flex items-center py-4 flex-shrink-0">
-        <Input
-          placeholder="Search files and folders..."
+          placeholder="Search..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="w-48"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
