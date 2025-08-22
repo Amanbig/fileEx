@@ -8,11 +8,11 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
   VisibilityState,
+  ColumnSizingState,
 } from "@tanstack/react-table"
 import { 
   ArrowUpDown, 
@@ -122,6 +122,13 @@ export function FileStructure() {
   const [loading, setLoading] = React.useState(true)
   const [navigationHistory, setNavigationHistory] = React.useState<string[]>([])
   const [historyIndex, setHistoryIndex] = React.useState(-1)
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({
+    name: 300,
+    date_modified: 120,
+    file_type: 80,
+    size: 100,
+    actions: 50,
+  })
 
   // Load initial directory
   React.useEffect(() => {
@@ -261,12 +268,19 @@ export function FileStructure() {
       cell: ({ row }) => {
         const fileItem = row.original
         return (
-          <div className="flex items-center gap-2">
-            {getFileIcon(fileItem.file_type, fileItem.extension)}
-            <span>{fileItem.name}</span>
+          <div className="flex items-center gap-2 min-w-0 max-w-[300px]">
+            <div className="flex-shrink-0">
+              {getFileIcon(fileItem.file_type, fileItem.extension)}
+            </div>
+            <span className="truncate" title={fileItem.name}>
+              {fileItem.name}
+            </span>
           </div>
         )
       },
+      size: 300,
+      minSize: 150,
+      maxSize: 350,
     },
     {
       accessorKey: "date_modified",
@@ -286,6 +300,9 @@ export function FileStructure() {
         const date = new Date(dateString)
         return <div>{date.toLocaleDateString()}</div>
       },
+      size: 120,
+      minSize: 100,
+      maxSize: 150,
     },
     {
       accessorKey: "file_type",
@@ -295,6 +312,9 @@ export function FileStructure() {
         if (fileItem.file_type === "folder") return <div>Folder</div>
         return <div className="capitalize">{fileItem.extension || "File"}</div>
       },
+      size: 80,
+      minSize: 60,
+      maxSize: 100,
     },
     {
       accessorKey: "size",
@@ -303,10 +323,16 @@ export function FileStructure() {
         const size = row.getValue("size") as number | null
         return <div className="text-right">{formatFileSize(size)}</div>
       },
+      size: 100,
+      minSize: 80,
+      maxSize: 120,
     },
     {
       id: "actions",
       enableHiding: false,
+      size: 50,
+      minSize: 50,
+      maxSize: 50,
       cell: ({ row }) => {
         const fileItem = row.original
 
@@ -400,17 +426,19 @@ export function FileStructure() {
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    columnResizeMode: 'onChange',
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
+      columnSizing,
     },
   })
 
@@ -566,30 +594,6 @@ export function FileStructure() {
             </Table>
           </div>
         </ScrollArea>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-2 flex-shrink-0">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          {/* <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button> */}
-        </div>
       </div>
       </div>
     </div>
