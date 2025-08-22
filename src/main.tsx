@@ -5,6 +5,7 @@ import { ThemeProvider } from "./components/themeProvider";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import TitleBar from "./components/app/titleBar";
+import CommandsPallet from "./components/app/commandsPallet";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <TitleBar />
+      <CommandsPallet/>
       <RouterProvider router={router} />
     </ThemeProvider>
   </React.StrictMode>
