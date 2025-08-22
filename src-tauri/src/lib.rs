@@ -185,6 +185,126 @@ async fn rename_item(old_path: String, new_name: String) -> Result<String, Strin
     }
 }
 
+#[tauri::command]
+async fn create_file(path: String, name: String) -> Result<String, String> {
+    let base_path = Path::new(&path);
+    
+    if !base_path.exists() || !base_path.is_dir() {
+        return Err("Directory does not exist".to_string());
+    }
+    
+    let file_path = base_path.join(&name);
+    
+    if file_path.exists() {
+        return Err("A file with that name already exists".to_string());
+    }
+    
+    match fs::File::create(&file_path) {
+        Ok(_) => Ok(format!("File '{}' created successfully", name)),
+        Err(e) => Err(format!("Failed to create file: {}", e)),
+    }
+}
+
+#[tauri::command]
+async fn copy_items(source_paths: Vec<String>, destination_path: String) -> Result<String, String> {
+    let dest_path = Path::new(&destination_path);
+    
+    if !dest_path.exists() || !dest_path.is_dir() {
+        return Err("Destination directory does not exist".to_string());
+    }
+    
+    let mut copied_count = 0;
+    
+    for source_path in source_paths {
+        let source = Path::new(&source_path);
+        
+        if !source.exists() {
+            continue; // Skip non-existent files
+        }
+        
+        let file_name = match source.file_name() {
+            Some(name) => name,
+            None => continue,
+        };
+        
+        let destination = dest_path.join(file_name);
+        
+        // Skip if destination already exists
+        if destination.exists() {
+            continue;
+        }
+        
+        let result = if source.is_dir() {
+            copy_dir_recursive(&source, &destination)
+        } else {
+            fs::copy(&source, &destination).map(|_| ())
+        };
+        
+        match result {
+            Ok(_) => copied_count += 1,
+            Err(_) => continue, // Skip failed copies
+        }
+    }
+    
+    Ok(format!("{} item(s) copied successfully", copied_count))
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), std::io::Error> {
+    fs::create_dir_all(dst)?;
+    
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
+async fn move_items(source_paths: Vec<String>, destination_path: String) -> Result<String, String> {
+    let dest_path = Path::new(&destination_path);
+    
+    if !dest_path.exists() || !dest_path.is_dir() {
+        return Err("Destination directory does not exist".to_string());
+    }
+    
+    let mut moved_count = 0;
+    
+    for source_path in source_paths {
+        let source = Path::new(&source_path);
+        
+        if !source.exists() {
+            continue; // Skip non-existent files
+        }
+        
+        let file_name = match source.file_name() {
+            Some(name) => name,
+            None => continue,
+        };
+        
+        let destination = dest_path.join(file_name);
+        
+        // Skip if destination already exists
+        if destination.exists() {
+            continue;
+        }
+        
+        match fs::rename(&source, &destination) {
+            Ok(_) => moved_count += 1,
+            Err(_) => continue, // Skip failed moves
+        }
+    }
+    
+    Ok(format!("{} item(s) moved successfully", moved_count))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -196,8 +316,11 @@ pub fn run() {
             navigate_to_path,
             get_home_directory,
             create_folder,
+            create_file,
             delete_item,
-            rename_item
+            rename_item,
+            copy_items,
+            move_items
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

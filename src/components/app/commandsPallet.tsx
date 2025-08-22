@@ -12,6 +12,10 @@ interface CommandsPalletProps {
   onItemsDeleted: () => void;
 }
 
+// Global clipboard state for cut/copy operations
+let clipboardItems: string[] = [];
+let clipboardOperation: 'copy' | 'cut' | null = null;
+
 export default function CommandsPallet({ 
   currentPath, 
   selectedItems, 
@@ -33,6 +37,24 @@ export default function CommandsPallet({
             onRefresh();
         } catch (error) {
             alert(`Failed to create folder: ${error}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCreateFile = async () => {
+        const fileName = prompt("Enter file name (with extension):");
+        if (!fileName || fileName.trim() === "") return;
+
+        setIsLoading(true);
+        try {
+            await invoke("create_file", { 
+                path: currentPath, 
+                name: fileName.trim() 
+            });
+            onRefresh();
+        } catch (error) {
+            alert(`Failed to create file: ${error}`);
         } finally {
             setIsLoading(false);
         }
@@ -70,11 +92,62 @@ export default function CommandsPallet({
             return;
         }
         
-        // For now, just copy the file paths to clipboard
+        // Store items for clipboard operations
+        clipboardItems = [...selectedItems];
+        clipboardOperation = 'copy';
+        
+        // Also copy file paths to system clipboard for external use
         const pathsText = selectedItems.join("\n");
         navigator.clipboard.writeText(pathsText)
-            .then(() => alert(`Copied ${selectedItems.length} file path(s) to clipboard`))
+            .then(() => alert(`Copied ${selectedItems.length} item(s) to clipboard`))
             .catch(() => alert("Failed to copy to clipboard"));
+    };
+
+    const handleCutSelected = () => {
+        if (selectedItems.length === 0) {
+            alert("No items selected to cut");
+            return;
+        }
+        
+        // Store items for clipboard operations
+        clipboardItems = [...selectedItems];
+        clipboardOperation = 'cut';
+        
+        alert(`Cut ${selectedItems.length} item(s) to clipboard`);
+    };
+
+    const handlePaste = async () => {
+        if (clipboardItems.length === 0 || !clipboardOperation) {
+            alert("Nothing to paste");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            if (clipboardOperation === 'copy') {
+                await invoke("copy_items", { 
+                    source_paths: clipboardItems, 
+                    destination_path: currentPath 
+                });
+                alert(`Pasted ${clipboardItems.length} item(s)`);
+            } else if (clipboardOperation === 'cut') {
+                await invoke("move_items", { 
+                    source_paths: clipboardItems, 
+                    destination_path: currentPath 
+                });
+                alert(`Moved ${clipboardItems.length} item(s)`);
+                
+                // Clear clipboard after cutting
+                clipboardItems = [];
+                clipboardOperation = null;
+            }
+            
+            onRefresh();
+        } catch (error) {
+            alert(`Failed to paste: ${error}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return(
@@ -105,13 +178,14 @@ export default function CommandsPallet({
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-8 w-8 p-0"
-                                disabled={true} // TODO: Implement file creation
+                                onClick={handleCreateFile}
+                                disabled={isLoading}
                             >
                                 <FilePlus className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>New File (Coming Soon)</p>
+                            <p>New File</p>
                         </TooltipContent>
                     </Tooltip>
                 </div>
@@ -126,13 +200,14 @@ export default function CommandsPallet({
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-8 w-8 p-0"
-                                disabled={true} // TODO: Implement cut
+                                onClick={handleCutSelected}
+                                disabled={selectedItems.length === 0}
                             >
                                 <ScissorsIcon className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Cut (Coming Soon)</p>
+                            <p>Cut Selected ({selectedItems.length})</p>
                         </TooltipContent>
                     </Tooltip>
                     
@@ -159,13 +234,14 @@ export default function CommandsPallet({
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-8 w-8 p-0"
-                                disabled={true} // TODO: Implement paste
+                                onClick={handlePaste}
+                                disabled={clipboardItems.length === 0 || isLoading}
                             >
                                 <ClipboardIcon className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Paste (Coming Soon)</p>
+                            <p>Paste {clipboardItems.length > 0 ? `(${clipboardItems.length} items)` : ''}</p>
                         </TooltipContent>
                     </Tooltip>
                 </div>
