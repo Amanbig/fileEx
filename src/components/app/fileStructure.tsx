@@ -393,6 +393,7 @@ export function FileStructure() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [currentPath, setCurrentPath] = React.useState("C:\\Users\\Documents")
 
   const table = useReactTable({
     data,
@@ -415,6 +416,26 @@ export function FileStructure() {
 
   return (
     <div className="w-full h-full flex flex-col p-4">
+      {/* Path Navigation Bar */}
+      <div className="flex items-center gap-2 mb-4">
+        <Input
+          placeholder="Path: C:\Users\Documents"
+          value={currentPath}
+          onChange={(event) => setCurrentPath(event.target.value)}
+          className="flex-1 font-mono text-sm"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              // Handle path navigation here
+              console.log('Navigate to:', currentPath)
+            }
+          }}
+        />
+        <Button variant="outline" size="sm">
+          Go
+        </Button>
+      </div>
+      
+      {/* Search and Controls Bar */}
       <div className="flex items-center py-4 flex-shrink-0">
         <Input
           placeholder="Search files and folders..."
@@ -509,7 +530,7 @@ export function FileStructure() {
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
         <div className="space-x-2">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
@@ -524,7 +545,7 @@ export function FileStructure() {
             disabled={!table.getCanNextPage()}
           >
             Next
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>
