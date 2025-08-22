@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { invoke } from "@tauri-apps/api/core"
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -25,7 +26,10 @@ import {
   Video,
   Archive,
   Code,
-  FileSpreadsheet
+  FileSpreadsheet,
+  ArrowRight,
+  ArrowLeft,
+  Home
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -49,182 +53,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-const data: FileItem[] = [
-  {
-    id: "1",
-    name: "Documents",
-    type: "folder",
-    size: null,
-    dateModified: new Date("2024-01-15"),
-    extension: null,
-  },
-  {
-    id: "2",
-    name: "Pictures",
-    type: "folder",
-    size: null,
-    dateModified: new Date("2024-01-10"),
-    extension: null,
-  },
-  {
-    id: "3",
-    name: "project-report.pdf",
-    type: "file",
-    size: 2048576, // 2MB
-    dateModified: new Date("2024-01-20"),
-    extension: "pdf",
-  },
-  {
-    id: "4",
-    name: "vacation-photo.jpg",
-    type: "file",
-    size: 5242880, // 5MB
-    dateModified: new Date("2024-01-18"),
-    extension: "jpg",
-  },
-  {
-    id: "5",
-    name: "music-playlist.mp3",
-    type: "file",
-    size: 8388608, // 8MB
-    dateModified: new Date("2024-01-16"),
-    extension: "mp3",
-  },
-  {
-    id: "6",
-    name: "presentation.pptx",
-    type: "file",
-    size: 15728640, // 15MB
-    dateModified: new Date("2024-01-14"),
-    extension: "pptx",
-  },
-  {
-    id: "7",
-    name: "src",
-    type: "folder",
-    size: null,
-    dateModified: new Date("2024-01-22"),
-    extension: null,
-  },
-  {
-    id: "8",
-    name: "index.html",
-    type: "file",
-    size: 4096, // 4KB
-    dateModified: new Date("2024-01-22"),
-    extension: "html",
-  },
-  {
-    id: "9",
-    name: "package.json",
-    type: "file",
-    size: 2048,
-    dateModified: new Date("2024-01-21"),
-    extension: "json",
-  },
-  {
-    id: "10",
-    name: "README.md",
-    type: "file",
-    size: 1024,
-    dateModified: new Date("2024-01-20"),
-    extension: "md",
-  },
-  {
-    id: "11",
-    name: "node_modules",
-    type: "folder",
-    size: null,
-    dateModified: new Date("2024-01-19"),
-    extension: null,
-  },
-  {
-    id: "12",
-    name: "style.css",
-    type: "file",
-    size: 8192,
-    dateModified: new Date("2024-01-18"),
-    extension: "css",
-  },
-  {
-    id: "13",
-    name: "script.js",
-    type: "file",
-    size: 16384,
-    dateModified: new Date("2024-01-17"),
-    extension: "js",
-  },
-  {
-    id: "14",
-    name: "image1.png",
-    type: "file",
-    size: 1048576,
-    dateModified: new Date("2024-01-16"),
-    extension: "png",
-  },
-  {
-    id: "15",
-    name: "video.mp4",
-    type: "file",
-    size: 52428800,
-    dateModified: new Date("2024-01-15"),
-    extension: "mp4",
-  },
-  {
-    id: "16",
-    name: "archive.zip",
-    type: "file",
-    size: 10485760,
-    dateModified: new Date("2024-01-14"),
-    extension: "zip",
-  },
-  {
-    id: "17",
-    name: "data.xlsx",
-    type: "file",
-    size: 3145728,
-    dateModified: new Date("2024-01-13"),
-    extension: "xlsx",
-  },
-  {
-    id: "18",
-    name: "temp",
-    type: "folder",
-    size: null,
-    dateModified: new Date("2024-01-12"),
-    extension: null,
-  },
-  {
-    id: "19",
-    name: "backup.tar.gz",
-    type: "file",
-    size: 20971520,
-    dateModified: new Date("2024-01-11"),
-    extension: "tar",
-  },
-  {
-    id: "20",
-    name: "config.json",
-    type: "file",
-    size: 512,
-    dateModified: new Date("2024-01-10"),
-    extension: "json",
-  },
-]
+import CommandsPallet from "./commandsPallet"
 
 export type FileItem = {
   id: string
   name: string
-  type: "file" | "folder"
+  file_type: "file" | "folder" // Changed from 'type' to match Rust struct
   size: number | null // in bytes, null for folders
-  dateModified: Date
+  date_modified: string // Changed to string to match Rust DateTime serialization
   extension: string | null
+  path: string // Added path field
 }
 
 // Helper function to get file icon
-const getFileIcon = (type: string, extension: string | null) => {
-  if (type === "folder") return <Folder className="h-4 w-4 text-blue-500" />
+const getFileIcon = (file_type: string, extension: string | null) => {
+  if (file_type === "folder") return <Folder className="h-4 w-4 text-blue-500" />
   
   if (!extension) return <File className="h-4 w-4" />
   
@@ -266,125 +109,6 @@ const formatFileSize = (bytes: number | null) => {
   return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 }
 
-export const columns: ColumnDef<FileItem>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Name
-          <ArrowUpDown />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const fileItem = row.original
-      return (
-        <div className="flex items-center gap-2">
-          {getFileIcon(fileItem.type, fileItem.extension)}
-          <span>{fileItem.name}</span>
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "dateModified",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date Modified
-          <ArrowUpDown />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const date = row.getValue("dateModified") as Date
-      return <div>{date.toLocaleDateString()}</div>
-    },
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const fileItem = row.original
-      if (fileItem.type === "folder") return <div>Folder</div>
-      return <div className="capitalize">{fileItem.extension || "File"}</div>
-    },
-  },
-  {
-    accessorKey: "size",
-    header: () => <div className="text-right">Size</div>,
-    cell: ({ row }) => {
-      const size = row.getValue("size") as number | null
-      return <div className="text-right">{formatFileSize(size)}</div>
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const fileItem = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>
-              Open
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(fileItem.name)}
-            >
-              Copy name
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Rename</DropdownMenuItem>
-            <DropdownMenuItem>Properties</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
-
 export function FileStructure() {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -393,7 +117,283 @@ export function FileStructure() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
-  const [currentPath, setCurrentPath] = React.useState("C:\\Users\\Documents")
+  const [currentPath, setCurrentPath] = React.useState("")
+  const [data, setData] = React.useState<FileItem[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [navigationHistory, setNavigationHistory] = React.useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = React.useState(-1)
+
+  // Load initial directory
+  React.useEffect(() => {
+    const loadInitialDirectory = async () => {
+      try {
+        const homeDir = await invoke<string>("get_home_directory")
+        setCurrentPath(homeDir)
+        const files = await invoke<FileItem[]>("list_directory", { path: homeDir })
+        setData(files)
+        setNavigationHistory([homeDir])
+        setHistoryIndex(0)
+      } catch (error) {
+        console.error("Failed to load initial directory:", error)
+        // Fallback to current directory
+        try {
+          const currentDir = await invoke<string>("get_current_directory")
+          setCurrentPath(currentDir)
+          const files = await invoke<FileItem[]>("list_directory", { path: currentDir })
+          setData(files)
+          setNavigationHistory([currentDir])
+          setHistoryIndex(0)
+        } catch (fallbackError) {
+          console.error("Failed to load current directory:", fallbackError)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadInitialDirectory()
+  }, [])
+
+  // Navigate to a new path
+  const navigateToPath = async (path: string, addToHistory = true) => {
+    setLoading(true)
+    try {
+      const files = await invoke<FileItem[]>("navigate_to_path", { path })
+      setData(files)
+      setCurrentPath(path)
+      
+      if (addToHistory) {
+        // Add to navigation history
+        const newHistory = navigationHistory.slice(0, historyIndex + 1)
+        newHistory.push(path)
+        setNavigationHistory(newHistory)
+        setHistoryIndex(newHistory.length - 1)
+      }
+    } catch (error) {
+      console.error("Failed to navigate to path:", error)
+      alert(`Failed to navigate to: ${path}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Navigate back in history
+  const navigateBack = async () => {
+    if (historyIndex > 0) {
+      const previousPath = navigationHistory[historyIndex - 1]
+      setHistoryIndex(historyIndex - 1)
+      await navigateToPath(previousPath, false)
+    }
+  }
+
+  // Navigate to home directory
+  const navigateHome = async () => {
+    try {
+      const homeDir = await invoke<string>("get_home_directory")
+      await navigateToPath(homeDir)
+    } catch (error) {
+      console.error("Failed to navigate to home:", error)
+    }
+  }
+
+  // Handle double-click on folder
+  const handleItemDoubleClick = (item: FileItem) => {
+    if (item.file_type === "folder") {
+      navigateToPath(item.path)
+    }
+  }
+
+  // Get selected item paths
+  const getSelectedItemPaths = (): string[] => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows
+    return selectedRows.map(row => row.original.path)
+  }
+
+  // Refresh current directory
+  const handleRefresh = () => {
+    if (currentPath) {
+      navigateToPath(currentPath)
+    }
+  }
+
+  // Handle items deleted (clear selection)
+  const handleItemsDeleted = () => {
+    setRowSelection({})
+  }
+
+  // Define columns inside the component so they have access to functions
+  const columns: ColumnDef<FileItem>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name
+            <ArrowUpDown />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const fileItem = row.original
+        return (
+          <div className="flex items-center gap-2">
+            {getFileIcon(fileItem.file_type, fileItem.extension)}
+            <span>{fileItem.name}</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "date_modified",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date Modified
+            <ArrowUpDown />
+          </Button>
+        )
+      },
+      cell: ({ row }) => {
+        const dateString = row.getValue("date_modified") as string
+        const date = new Date(dateString)
+        return <div>{date.toLocaleDateString()}</div>
+      },
+    },
+    {
+      accessorKey: "file_type",
+      header: "Type",
+      cell: ({ row }) => {
+        const fileItem = row.original
+        if (fileItem.file_type === "folder") return <div>Folder</div>
+        return <div className="capitalize">{fileItem.extension || "File"}</div>
+      },
+    },
+    {
+      accessorKey: "size",
+      header: () => <div className="text-right">Size</div>,
+      cell: ({ row }) => {
+        const size = row.getValue("size") as number | null
+        return <div className="text-right">{formatFileSize(size)}</div>
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const fileItem = row.original
+
+        const handleOpen = () => {
+          if (fileItem.file_type === "folder") {
+            navigateToPath(fileItem.path)
+          } else {
+            // TODO: Open file with default application
+            console.log("Opening file:", fileItem.path)
+          }
+        }
+
+        const handleRename = async () => {
+          const newName = prompt("Enter new name:", fileItem.name)
+          if (!newName || newName.trim() === "" || newName === fileItem.name) return
+
+          try {
+            await invoke("rename_item", { 
+              oldPath: fileItem.path, 
+              newName: newName.trim() 
+            })
+            handleRefresh()
+          } catch (error) {
+            alert(`Failed to rename: ${error}`)
+          }
+        }
+
+        const handleDelete = async () => {
+          const confirmDelete = confirm(`Are you sure you want to delete "${fileItem.name}"?`)
+          if (!confirmDelete) return
+
+          try {
+            await invoke("delete_item", { path: fileItem.path })
+            handleRefresh()
+          } catch (error) {
+            alert(`Failed to delete: ${error}`)
+          }
+        }
+
+        const handleCopyPath = () => {
+          navigator.clipboard.writeText(fileItem.path)
+            .then(() => alert("Path copied to clipboard"))
+            .catch(() => alert("Failed to copy path"))
+        }
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleOpen}>
+                {fileItem.file_type === "folder" ? "Open Folder" : "Open File"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleCopyPath}>
+                Copy Path
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(fileItem.name)}
+              >
+                Copy Name
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleRename}>
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Properties
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={handleDelete}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -415,25 +415,63 @@ export function FileStructure() {
   })
 
   return (
-    <div className="w-full h-full flex flex-col p-4">
+    <div className="w-full h-full flex flex-col">
+      {/* Commands Palette */}
+      <CommandsPallet
+        currentPath={currentPath}
+        selectedItems={getSelectedItemPaths()}
+        onRefresh={handleRefresh}
+        onItemsDeleted={handleItemsDeleted}
+      />
+      
+      {/* Main File Explorer */}
+      <div className="flex-1 flex flex-col p-4">
       {/* Path Navigation and Search Bar */}
       <div className="flex items-center gap-4 py-4 flex-shrink-0">
+        {/* Navigation Buttons */}
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={navigateBack}
+            disabled={loading || historyIndex <= 0}
+            className="h-8 w-8 p-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={navigateHome}
+            disabled={loading}
+            className="h-8 w-8 p-0"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+        </div>
+
         {/* Path Input */}
         <div className="flex items-center gap-2 flex-[2]">
           <Input
-            placeholder="Path: C:\Users\Documents"
+            placeholder="Enter path..."
             value={currentPath}
             onChange={(event) => setCurrentPath(event.target.value)}
             className="flex-1 font-mono text-sm"
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
-                // Handle path navigation here
-                console.log('Navigate to:', currentPath)
+                navigateToPath(currentPath)
               }
             }}
+            disabled={loading}
           />
-          <Button variant="outline" size="sm">
-            Go
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigateToPath(currentPath)}
+            disabled={loading}
+            className="h-8 w-8 p-0"
+          >
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
         
@@ -501,6 +539,8 @@ export function FileStructure() {
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
+                      onDoubleClick={() => handleItemDoubleClick(row.original)}
+                      className="cursor-pointer"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
@@ -518,7 +558,7 @@ export function FileStructure() {
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      No results.
+                      {loading ? "Loading..." : "No files found."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -550,6 +590,7 @@ export function FileStructure() {
             Next
           </Button> */}
         </div>
+      </div>
       </div>
     </div>
   )
