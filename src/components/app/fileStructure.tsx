@@ -54,6 +54,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import CommandsPallet from "./commandsPallet"
+import { toast } from "sonner"
 
 export type FileItem = {
   id: string
@@ -178,7 +179,7 @@ export function FileStructure() {
       }
     } catch (error) {
       console.error("Failed to navigate to path:", error)
-      alert(`Failed to navigate to: ${path}`)
+      toast.error(`Failed to navigate to: ${path}`)
     } finally {
       setLoading(false)
     }
@@ -356,7 +357,7 @@ export function FileStructure() {
             })
             handleRefresh()
           } catch (error) {
-            alert(`Failed to rename: ${error}`)
+            toast.error(`Failed to rename: ${error}`)
           }
         }
 
@@ -368,14 +369,14 @@ export function FileStructure() {
             await invoke("delete_item", { path: fileItem.path })
             handleRefresh()
           } catch (error) {
-            alert(`Failed to delete: ${error}`)
+            toast.error(`Failed to delete: ${error}`)
           }
         }
 
         const handleCopyPath = () => {
           navigator.clipboard.writeText(fileItem.path)
-            .then(() => alert("Path copied to clipboard"))
-            .catch(() => alert("Failed to copy path"))
+            .then(() => toast.success("Path copied to clipboard"))
+            .catch(() => toast.error("Failed to copy path"))
         }
 
         return (
