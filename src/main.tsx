@@ -17,9 +17,13 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <TitleBar />
-      <CommandsPallet/>
-      <RouterProvider router={router} />
+      <div className="flex flex-col h-screen overflow-hidden">
+        <TitleBar />
+        <CommandsPallet/>
+        <div className="flex-1 overflow-hidden">
+          <RouterProvider router={router} />
+        </div>
+      </div>
     </ThemeProvider>
   </React.StrictMode>
 );

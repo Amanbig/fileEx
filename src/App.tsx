@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import { FileStructure } from "./components/app/fileStructure";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -12,8 +13,8 @@ function App() {
   }
 
   return (
-    <div>
-      temp
+    <div className="h-full">
+      <FileStructure/>
     </div>
   );
 }
