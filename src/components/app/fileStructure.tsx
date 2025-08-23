@@ -55,6 +55,10 @@ import {
 } from "@/components/ui/table"
 import CommandsPallet from "./commandsPallet"
 import { toast } from "sonner"
+import { 
+  FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
+  FaFileExcel, FaFileWord, FaFilePowerpoint, FaFilePdf, FaFileAlt, FaDatabase 
+} from "react-icons/fa"
 
 export type FileItem = {
   id: string
@@ -66,38 +70,72 @@ export type FileItem = {
   path: string // Added path field
 }
 
-// Helper function to get file icon
+
 const getFileIcon = (file_type: string, extension: string | null) => {
-  if (file_type === "folder") return <Folder className="h-4 w-4 text-blue-500" />
+  if (file_type === "folder") return <FaFolder className="h-4 w-4 text-blue-500" />
   
-  if (!extension) return <File className="h-4 w-4" />
+  if (!extension) return <FaFile className="h-4 w-4" />
   
   const ext = extension.toLowerCase()
   
+  // Images
   if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
-    return <Image className="h-4 w-4 text-green-500" />
+    return <FaFileImage className="h-4 w-4 text-green-500" />
   }
+
+  // Audio
   if (['mp3', 'wav', 'flac', 'aac'].includes(ext)) {
-    return <Music className="h-4 w-4 text-purple-500" />
+    return <FaFileAudio className="h-4 w-4 text-purple-500" />
   }
+
+  // Video
   if (['mp4', 'avi', 'mkv', 'mov'].includes(ext)) {
-    return <Video className="h-4 w-4 text-red-500" />
+    return <FaFileVideo className="h-4 w-4 text-red-500" />
   }
+
+  // Archives
   if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-    return <Archive className="h-4 w-4 text-orange-500" />
+    return <FaFileArchive className="h-4 w-4 text-orange-500" />
   }
-  if (['js', 'ts', 'tsx', 'jsx', 'html', 'css', 'py', 'java', 'cpp'].includes(ext)) {
-    return <Code className="h-4 w-4 text-blue-600" />
+
+  // Code files
+  if (['js', 'ts', 'tsx', 'jsx', 'html', 'css', 'py', 'java', 'cpp', 'c', 'cs', 'go', 'rs', 'php', 'rb', 'swift'].includes(ext)) {
+    return <FaFileCode className="h-4 w-4 text-blue-600" />
   }
+
+  // Excel / Spreadsheet
   if (['xlsx', 'xls', 'csv'].includes(ext)) {
-    return <FileSpreadsheet className="h-4 w-4 text-green-600" />
+    return <FaFileExcel className="h-4 w-4 text-green-600" />
   }
-  if (['txt', 'md', 'pdf', 'doc', 'docx'].includes(ext)) {
-    return <FileText className="h-4 w-4 text-gray-600" />
+
+  // Word Docs
+  if (['doc', 'docx'].includes(ext)) {
+    return <FaFileWord className="h-4 w-4 text-blue-700" />
   }
-  
-  return <File className="h-4 w-4" />
+
+  // PowerPoint
+  if (['ppt', 'pptx'].includes(ext)) {
+    return <FaFilePowerpoint className="h-4 w-4 text-orange-600" />
+  }
+
+  // PDF
+  if (['pdf'].includes(ext)) {
+    return <FaFilePdf className="h-4 w-4 text-red-600" />
+  }
+
+  // Text & Markdown
+  if (['txt', 'md', 'rtf'].includes(ext)) {
+    return <FaFileAlt className="h-4 w-4 text-gray-600" />
+  }
+
+  // Database files
+  if (['sql', 'db', 'sqlite', 'mongodb'].includes(ext)) {
+    return <FaDatabase className="h-4 w-4 text-yellow-600" />
+  }
+
+  return <FaFile className="h-4 w-4" />
 }
+
 
 // Helper function to format file size
 const formatFileSize = (bytes: number | null) => {
