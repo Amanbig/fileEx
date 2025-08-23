@@ -305,6 +305,25 @@ async fn move_items(source_paths: Vec<String>, destination_path: String) -> Resu
     Ok(format!("{} item(s) moved successfully", moved_count))
 }
 
+#[tauri::command]
+async fn open_file_with_default_app(file_path: String) -> Result<String, String> {
+    let path = Path::new(&file_path);
+    
+    if !path.exists() {
+        return Err("File does not exist".to_string());
+    }
+    
+    if path.is_dir() {
+        return Err("Cannot open directory with default app. Use navigate instead.".to_string());
+    }
+    
+    // Use the system's default application to open the file
+    match open::that(&file_path) {
+        Ok(_) => Ok(format!("Opened '{}' with default application", path.file_name().unwrap_or_default().to_string_lossy())),
+        Err(e) => Err(format!("Failed to open file: {}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -320,7 +339,8 @@ pub fn run() {
             delete_item,
             rename_item,
             copy_items,
-            move_items
+            move_items,
+            open_file_with_default_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -233,10 +233,18 @@ export function FileStructure() {
     }
   }
 
-  // Handle double-click on folder
-  const handleItemDoubleClick = (item: FileItem) => {
+  // Handle double-click on folder or file
+  const handleItemDoubleClick = async (item: FileItem) => {
     if (item.file_type === "folder") {
       navigateToPath(item.path)
+    } else {
+      // Try to open file with default application
+      try {
+        const result = await invoke<string>("open_file_with_default_app", { filePath: item.path })
+        toast.success(result)
+      } catch (error) {
+        toast.error(`Failed to open file: ${error}`)
+      }
     }
   }
 
@@ -366,12 +374,17 @@ export function FileStructure() {
       cell: ({ row }) => {
         const fileItem = row.original
 
-        const handleOpen = () => {
+        const handleOpen = async () => {
           if (fileItem.file_type === "folder") {
             navigateToPath(fileItem.path)
           } else {
-            // TODO: Open file with default application
-            console.log("Opening file:", fileItem.path)
+            // Open file with default application
+            try {
+              const result = await invoke<string>("open_file_with_default_app", { filePath: fileItem.path })
+              toast.success(result)
+            } catch (error) {
+              toast.error(`Failed to open file: ${error}`)
+            }
           }
         }
 

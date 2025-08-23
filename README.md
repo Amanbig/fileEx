@@ -2,6 +2,27 @@
 
 A modern, feature-rich file explorer built with Tauri, React, TypeScript, and shadcn/ui. FileEx provides a clean, intuitive interface for managing files and folders with advanced features and beautiful UI components.
 
+## 📸 Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="images/light.png" alt="FileEx Light Theme" width="450"/>
+        <br/>
+        <sub><b>Light Theme</b></sub>
+      </td>
+      <td align="center">
+        <img src="images/dark.png" alt="FileEx Dark Theme" width="450"/>
+        <br/>
+        <sub><b>Dark Theme</b></sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-blue?logo=tauri)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
