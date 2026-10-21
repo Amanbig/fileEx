@@ -12,9 +12,18 @@ import ThemeToggle from "./themeToggle";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [appVersion, setAppVersion] = useState("0.5.4");
   const appWindow = getCurrentWindow();
 
   useEffect(() => {
+    // Fetch version dynamically from Tauri, with fallback to 0.5.4
+    import("@tauri-apps/api/app")
+      .then((app) => app.getVersion())
+      .then((ver) => {
+        if (ver) setAppVersion(ver);
+      })
+      .catch(() => {});
+
     let unlisten: (() => void) | undefined;
 
     const checkMaximized = async () => {
@@ -69,6 +78,9 @@ export default function TitleBar() {
       <div className="flex items-center gap-2 pointer-events-none select-none">
         <FolderKanban className="h-4 w-4 text-primary" />
         <span className="font-semibold tracking-wide text-xs">FileEx</span>
+        <span className="text-[10px] text-muted-foreground/80 font-mono bg-muted/60 px-1.5 py-0.5 rounded border border-border/40">
+          v{appVersion}
+        </span>
       </div>
 
       <div className="flex items-center gap-1 no-drag">
