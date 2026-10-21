@@ -1,6 +1,22 @@
 # FileEx - Modern File Explorer
 
-A modern, feature-rich file explorer built with Tauri, React, TypeScript, and shadcn/ui. FileEx provides a clean, intuitive interface for managing files and folders with advanced features and beautiful UI components.
+<div align="center">
+  <img src="images/dark.png" alt="FileEx Banner" width="85%" style="border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
+  <br/><br/>
+
+  [![Version](https://img.shields.io/badge/Version-0.5.4-emerald?style=flat-square)](https://github.com/Amanbig/fileEx/releases)
+  [![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8D8?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app/)
+  [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS%204-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+  <p align="center">
+    A fast, lightweight, and modern cross-platform desktop file explorer built with <b>Tauri 2</b>, <b>React 19</b>, <b>Rust</b>, and <b>shadcn/ui</b>.
+  </p>
+</div>
+
+---
 
 ## 📸 Screenshots
 
@@ -8,12 +24,12 @@ A modern, feature-rich file explorer built with Tauri, React, TypeScript, and sh
   <table>
     <tr>
       <td align="center">
-        <img src="images/light.png" alt="FileEx Light Theme" width="450"/>
+        <img src="images/light.png" alt="FileEx Light Theme" width="460"/>
         <br/>
         <sub><b>Light Theme</b></sub>
       </td>
       <td align="center">
-        <img src="images/dark.png" alt="FileEx Dark Theme" width="450"/>
+        <img src="images/dark.png" alt="FileEx Dark Theme" width="460"/>
         <br/>
         <sub><b>Dark Theme</b></sub>
       </td>
@@ -23,48 +39,79 @@ A modern, feature-rich file explorer built with Tauri, React, TypeScript, and sh
 
 ---
 
-![Tauri](https://img.shields.io/badge/Tauri-2.0-blue?logo=tauri)
-![React](https://img.shields.io/badge/React-18-blue?logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
-![Tailwind](https://img.shields.io/badge/Tailwind-CSS-blue?logo=tailwindcss)
+## ✨ Features at a Glance
 
-## ✨ Features
+### 🚀 In-App Updater & Smart Package Manager
+- **Live GitHub Releases Checking**: One-click check from the Settings drawer for the latest official release.
+- **Optimized Background Checking**: Runs silently on launch (throttled to once every 6 hours via local storage cache) without slowing down app startup or triggering API rate limits.
+- **Notification Dot Badge**: Visual update indicators appear on TitleBar and Sidebar settings buttons when an update is available.
+- **Smart OS & Architecture Matching**:
+  - **Linux**: Matches `.deb` (Debian/Ubuntu), `.AppImage`, or `.rpm` for `x86_64` / `aarch64`.
+  - **Windows**: Matches `.msi` or `.exe` installer binaries.
+  - **macOS**: Matches `.dmg` Apple Silicon or Intel disk images.
+- **Download Streaming with Live Progress**: Displays real-time download percentage, megabytes transferred, and speed.
+- **Elevated Permissions Handling**:
+  - For Linux `.deb` packages, triggers native system Polkit authentication via `pkexec apt-get install -y` with automatic fallback to software managers.
+  - For `.AppImage` packages, sets executable permissions (`chmod 0755`) and executes immediately.
+  - For Windows & macOS, directly executes installers seamlessly.
 
-### 🗂️ **File Management**
-- **Browse Directories**: Navigate through your file system with ease
-- **Create Files & Folders**: Create new files and folders with validation
-- **Rename Items**: Rename files and folders inline
-- **Delete Items**: Safe deletion with confirmation dialogs
-- **File Icons**: Beautiful icons for different file types and folders
+### 💻 Integrated Terminal Launcher
+- **Instant Terminal Opening**: Launch an external terminal directly inside any selected directory or current canvas.
+- **Three Access Points**: Top toolbar action button, canvas right-click context menu, and folder context menu.
+- **Cross-Platform Auto-Detection**:
+  - **Linux**: Prioritizes `$TERMINAL`, `x-terminal-emulator`, `gnome-terminal`, `ptyxis`, `konsole`, `xfce4-terminal`, `kitty`, `alacritty`, `foot`, `tilix`.
+  - **Windows**: Launches Windows Terminal (`wt -d`), PowerShell, or `cmd.exe`.
+  - **macOS**: Launches native `Terminal.app` (`open -a Terminal`).
 
-### 📋 **Clipboard Operations**
-- **Cut & Copy**: Full clipboard support for files and folders
-- **Paste**: Paste files/folders with recursive copying
-- **System Clipboard**: Copy file paths to system clipboard for external use
+### ⚙️ Full Customization Settings
+- **Slide-Over Settings Drawer**: Accessible via `Ctrl+,`, TitleBar gear, or Sidebar settings button.
+- **Themes**: Switch between Light, Dark, or System mode with harmonious neutral-slate styling.
+- **Typography & Font Sizing**: Choose Small (13px), Medium (14px), or Large (16px) with dynamic UI scaling; toggle between System Sans, Monospace, and Elegant Serif typefaces.
+- **Explorer Navigation**: Configurable Single-Click or Double-Click folder navigation.
+- **Hidden Files Toggle**: Show or hide system dotfiles (`.git`, `.config`, etc.) with a single click.
+- **Merged About & Updates**: View system info, app version, release notes, license, and update status in one clean screen.
 
-### 🎨 **Modern UI/UX**
-- **Custom Window Controls**: Minimize, maximize, and close buttons
-- **Responsive Layout**: Adapts to different window sizes
-- **Table View**: Sortable table with file details (name, size, type, date modified)
-- **Search & Filter**: Real-time file search and filtering
-- **Column Management**: Show/hide columns and resize them
-- **Toast Notifications**: Beautiful, non-intrusive notifications using Sonner
-- **Dialog System**: Professional dialogs for confirmations and input
+### 🗂️ Dual View Modes
+- **Details Table View**: High-density sortable table with responsive layout (`Name` takes all available width, with compact columns for `Date Modified`, `Type`, and `Size`).
+- **Cards Grid View**: Rich visual grid with large colored file-type icons, file names, and human-readable sizes.
+- **Persistent View Preference**: Remembers your preferred view layout across app sessions.
 
-### 🔧 **Advanced Features**
-- **Path Navigation**: Direct path input and navigation
-- **File Selection**: Multi-select files with checkboxes
-- **Context Menus**: Right-click actions for individual files
-- **Keyboard Shortcuts**: Quick actions with Enter/Escape keys
-- **Loading States**: Visual feedback during operations
-- **Error Handling**: Comprehensive error handling with user-friendly messages
+### 📌 Places Sidebar & Pinned Favorites
+- **Quick Access Places**: Quick one-click navigation to Home, Desktop, Documents, Downloads, Pictures, Videos, Music, and Root filesystem.
+- **Custom Favorites**: Pin and unpin any folder to your favorites list with persistent storage.
+- **Collapsible Mode**: Compact sidebar toggle to maximize browsing workspace.
 
-### 🎯 **File Operations**
-- **Double-click Navigation**: Open folders by double-clicking
-- **Bulk Operations**: Perform actions on multiple selected files
-- **File Type Detection**: Automatic file type detection and icons
-- **Size Formatting**: Human-readable file sizes
-- **Date Formatting**: Localized date display
+### 🧭 Interactive Breadcrumb Navigation
+- **Clickable Breadcrumb Path**: Click any segment of the path to jump directly to parent directories.
+- **Click-to-Edit Address Bar**: Click on the breadcrumb background to type or paste direct paths.
+- **History & Parent Navigation**: Dedicated Back (`Alt+Left`), Forward (`Alt+Right`), and Up-one-level (`Alt+Up`) buttons.
+
+### 🖱️ Context Menus & Global Keyboard Shortcuts
+- **Right-Click Context Menus**:
+  - **Files & Folders**: Open, Open in Terminal, Copy, Cut, Copy Path, Copy Name, Rename, Properties, Delete.
+  - **Empty Canvas**: Create New Folder, Create New File, Paste, Refresh, Open Terminal Here.
+- **Native Modal Dialogs**:
+  - Inline rename modal with intelligent filename stem pre-selection (preserving extension).
+  - Destructive deletion confirmation dialog.
+  - Comprehensive File/Folder Properties Inspector displaying file size, Unix permissions, dates, and directory item counts.
+- **Global Desktop Hotkeys**:
+
+| Shortcut | Action |
+|:---|:---|
+| <kbd>Ctrl</kbd> + <kbd>C</kbd> | Copy selected items to clipboard |
+| <kbd>Ctrl</kbd> + <kbd>X</kbd> | Cut selected items to clipboard |
+| <kbd>Ctrl</kbd> + <kbd>V</kbd> | Paste items from clipboard |
+| <kbd>Ctrl</kbd> + <kbd>A</kbd> | Select all items in current directory |
+| <kbd>Ctrl</kbd> + <kbd>,</kbd> | Open Settings drawer |
+| <kbd>F2</kbd> | Rename selected item |
+| <kbd>Delete</kbd> | Delete selected item(s) |
+| <kbd>Enter</kbd> | Open selected folder or launch file |
+| <kbd>Alt</kbd> + <kbd>←</kbd> | Navigate Back in history |
+| <kbd>Alt</kbd> + <kbd>→</kbd> | Navigate Forward in history |
+| <kbd>Alt</kbd> + <kbd>↑</kbd> | Navigate Up one level (`..`) |
+| <kbd>Esc</kbd> | Clear selection / close dialogs |
+
+---
 
 ## 🚀 Quick Start
 
@@ -73,7 +120,13 @@ A modern, feature-rich file explorer built with Tauri, React, TypeScript, and sh
 - [Rust](https://rustup.rs/) (latest stable)
 - [Git](https://git-scm.com/)
 
-### Installation
+#### Linux System Packages (Debian/Ubuntu)
+```bash
+sudo apt update
+sudo apt install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+```
+
+### Installation & Run
 
 1. **Clone the repository**
    ```bash
@@ -91,187 +144,119 @@ A modern, feature-rich file explorer built with Tauri, React, TypeScript, and sh
    npm run tauri dev
    ```
 
-4. **Build for production**
+4. **Build production executable**
    ```bash
    npm run tauri build
    ```
 
+---
+
 ## 🛠️ Technology Stack
 
-### Frontend
-- **React 18**: Modern React with hooks and functional components
-- **TypeScript**: Type-safe development
-- **Vite**: Fast build tool and dev server
-- **Tailwind CSS**: Utility-first CSS framework
-- **shadcn/ui**: Beautiful, accessible UI components
-- **TanStack Table**: Powerful table component with sorting, filtering
-- **Lucide React**: Beautiful SVG icons
-- **Sonner**: Toast notifications
+| Layer | Technologies |
+|:---|:---|
+| **Frontend Framework** | [React 19](https://react.dev/) + [TypeScript 5](https://www.typescriptlang.org/) |
+| **Desktop Framework** | [Tauri 2.0](https://tauri.app/) (Rust 2021) |
+| **Bundler & Tooling** | [Vite 7](https://vitejs.dev/) |
+| **Styling & Design** | [Tailwind CSS 4](https://tailwindcss.com/) + CSS Variables |
+| **UI Components** | [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) |
+| **Table & Sorting** | [TanStack Table v8](https://tanstack.com/table) |
+| **Icons & Feedback** | [Lucide React](https://lucide.dev/) + [Sonner Toasts](https://sonner.emilkowal.ski/) |
+| **Rust Backend Crates**| `tauri`, `serde`, `tokio`, `reqwest`, `dirs`, `chrono`, `open` |
 
-### Backend
-- **Tauri 2.0**: Rust-based desktop app framework
-- **Rust**: Systems programming language for performance
-- **Serde**: Serialization/deserialization
-- **Chrono**: Date and time handling
-- **Tokio**: Async runtime
-
-### UI Components
-- Button, Input, Label, Tooltip
-- Dialog, ScrollArea, Separator
-- Table, Checkbox, DropdownMenu
-- Toast notifications (Sonner)
+---
 
 ## 📁 Project Structure
 
 ```
 fileEx/
-├── src/                          # React frontend
+├── src/                          # React 19 Frontend
 │   ├── components/
 │   │   ├── app/
-│   │   │   ├── fileStructure.tsx # Main file explorer component
-│   │   │   ├── commandsPallet.tsx # Toolbar with file operations
-│   │   │   └── titleBar.tsx      # Custom window title bar
-│   │   └── ui/                   # shadcn/ui components
+│   │   │   ├── commandsPallet.tsx       # Breadcrumbs, history, view toggle & actions
+│   │   │   ├── deleteModal.tsx          # Confirm delete modal dialog
+│   │   │   ├── fileGrid.tsx             # Responsive card grid view component
+│   │   │   ├── fileStructure.tsx        # Main explorer controller & TanStack table view
+│   │   │   ├── placesSidebar.tsx        # System places & pinned favorites sidebar
+│   │   │   ├── propertiesModal.tsx      # File & folder properties inspector
+│   │   │   ├── renameModal.tsx          # Rename modal with smart stem selection
+│   │   │   ├── settingsModal.tsx        # Settings slide-over drawer
+│   │   │   ├── settingsUpdatesTab.tsx   # In-app updater & release manager
+│   │   │   ├── themeToggle.tsx          # Quick theme switcher
+│   │   │   └── titleBar.tsx             # Frameless title bar with native window controls
+│   │   ├── ui/                          # shadcn/ui base primitives
+│   │   └── themeProvider.tsx            # Theme provider context
+│   ├── hooks/
+│   │   ├── useAppSettings.tsx           # App customization state & persistent settings
+│   │   └── useAppUpdateCheck.ts         # Silent background update checker
 │   ├── lib/
-│   │   └── utils.ts             # Utility functions
-│   ├── App.tsx                  # Main app component
-│   └── main.tsx                 # React entry point
-├── src-tauri/                   # Rust backend
+│   │   └── utils.ts                     # Utility helpers (formatting, class merging)
+│   ├── App.css                          # Modern neutral-slate styling & design tokens
+│   ├── App.tsx                          # App root with Settings & Theme providers
+│   └── main.tsx                         # React entry point
+├── src-tauri/                     # Rust Desktop Backend
 │   ├── src/
-│   │   ├── lib.rs              # Tauri commands and file operations
-│   │   └── main.rs             # Main Rust entry point
-│   ├── Cargo.toml              # Rust dependencies
-│   └── tauri.conf.json         # Tauri configuration
-├── public/                     # Static assets
-└── package.json               # Node.js dependencies
+│   │   ├── lib.rs                       # Tauri commands (file I/O, updater, terminal launcher)
+│   │   └── main.rs                      # Tauri runtime entry point
+│   ├── Cargo.toml                       # Rust dependencies
+│   ├── tauri.conf.json                  # Tauri configuration & window settings
+│   └── icons/                           # Application branding icons
+├── releases/                      # Changelogs & detailed release notes
+│   ├── v0.1.0.md
+│   └── v0.5.4.md
+├── .github/workflows/             # GitHub Actions CI/CD release automation
+│   └── release.yml
+├── LICENSE                        # MIT License
+├── package.json                   # Frontend dependencies & scripts
+└── README.md                      # Project documentation
 ```
-
-## 🎮 Usage Guide
-
-### Basic Navigation
-1. **Browse Files**: The main table shows files and folders in the current directory
-2. **Open Folders**: Double-click on folders to navigate into them
-3. **Go Home**: Click the home button to navigate to your home directory
-4. **Path Input**: Type or paste a path in the address bar and press Enter
-
-### File Operations
-1. **Create New**:
-   - Click the folder+ icon to create a new folder
-   - Click the file+ icon to create a new file
-   - Enter the name in the dialog and click "Create"
-
-2. **Select Files**:
-   - Click checkboxes to select individual files
-   - Use the header checkbox to select all files
-
-3. **Cut/Copy/Paste**:
-   - Select files and click the cut (scissors) or copy icon
-   - Navigate to destination and click paste (clipboard) icon
-
-4. **Delete Files**:
-   - Select files and click the trash icon
-   - Confirm deletion in the dialog
-
-### Advanced Features
-- **Search**: Use the search box to filter files by name
-- **Sort**: Click column headers to sort by name, date, type, or size
-- **Resize Columns**: Drag column borders to resize
-- **Show/Hide Columns**: Use the "Columns" dropdown to toggle visibility
-
-## 🔧 Configuration
-
-### Window Settings
-The app uses a custom window frame with these features:
-- Transparent title bar
-- Custom window controls
-- Resizable and maximizable
-- Minimum size: 800x600
-
-### Tauri Commands
-Available Rust commands that can be called from the frontend:
-- `get_current_directory()` - Get current working directory
-- `get_home_directory()` - Get user's home directory
-- `list_directory(path)` - List files and folders in a directory
-- `navigate_to_path(path)` - Navigate to a specific path
-- `create_folder(path, name)` - Create a new folder
-- `create_file(path, name)` - Create a new file
-- `delete_item(path)` - Delete a file or folder
-- `rename_item(old_path, new_name)` - Rename a file or folder
-- `copy_items(source_paths, destination_path)` - Copy files/folders
-- `move_items(source_paths, destination_path)` - Move files/folders
-
-## 🎨 Customization
-
-### Themes
-The app uses Tailwind CSS with CSS variables for theming. You can customize colors in:
-- `src/App.css` - Global styles and theme variables
-- `tailwind.config.js` - Tailwind configuration
-
-### File Icons
-File type icons are defined in `fileStructure.tsx`. Add new file types by extending the `getFileIcon` function.
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **App won't start**
-   - Ensure Rust and Node.js are installed
-   - Run `npm install` to install dependencies
-   - Check that ports 1420 and 1421 are available
-
-2. **Build fails**
-   - Update Rust: `rustup update`
-   - Clear node modules: `rm -rf node_modules && npm install`
-   - Check Tauri prerequisites: `npm run tauri info`
-
-3. **File operations fail**
-   - Check file permissions
-   - Ensure paths exist and are accessible
-   - Look at console logs for detailed error messages
-
-## 📝 Development
-
-### Recommended IDE Setup
-- [VS Code](https://code.visualstudio.com/)
-- [Tauri Extension](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode)
-- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
-- [TypeScript Hero](https://marketplace.visualstudio.com/items?itemName=rbbit.typescript-hero)
-
-### Scripts
-```bash
-npm run dev          # Start frontend dev server only
-npm run tauri dev    # Start full Tauri development
-npm run build        # Build frontend for production
-npm run tauri build  # Build complete app for production
-npm run lint         # Run ESLint
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Tauri](https://tauri.app/) - For the amazing desktop app framework
-- [shadcn/ui](https://ui.shadcn.com/) - For the beautiful UI components
-- [Lucide](https://lucide.dev/) - For the gorgeous icons
-- [TanStack Table](https://tanstack.com/table) - For the powerful table component
-
-## 📞 Support
-
-If you have any questions or issues, please:
-1. Check the [Issues](https://github.com/Amanbig/fileEx/issues) page
-2. Create a new issue with detailed information
-3. Join our community discussions
 
 ---
 
-**Built with ❤️ using Tauri, React, and TypeScript**
+## 🔌 Tauri Backend Commands
+
+FileEx communicates between React and Rust via high-performance Tauri IPC commands:
+
+| Command | Description |
+|:---|:---|
+| `get_current_directory` | Resolves the initial working directory |
+| `get_home_directory` | Resolves user's home directory across Linux, macOS, and Windows |
+| `get_system_places` | Detects standard directories (Desktop, Documents, Downloads, Music, Pictures, Videos, Root) |
+| `list_directory(path)` | Efficiently lists all files and directories with metadata (size, dates, type, permissions) |
+| `navigate_to_path(path)` | Validates and resolves directory paths |
+| `create_folder(path, name)` | Creates a new folder |
+| `create_file(path, name)` | Creates a new empty file |
+| `delete_item(path)` | Deletes a file or directory recursively |
+| `rename_item(old_path, new_name)`| Renames a file or folder |
+| `copy_items(sources, dest)` | Copies files and folders recursively |
+| `move_items(sources, dest)` | Moves files and folders |
+| `open_file_with_default_app` | Launches a file in the system default application |
+| `open_terminal(path)` | Spawns an external terminal instance at the specified directory path |
+| `get_item_properties(path)` | Gathers comprehensive metadata (byte size, dates, counts, Unix mode) |
+| `get_install_info` | Detects OS platform, architecture, and current package installation format |
+| `download_update_file` | Streams release binaries from GitHub with live progress feedback |
+| `install_update_package` | Runs the package installer (`pkexec apt` for `.deb`, `chmod` for AppImage, `open` for DMG/MSI) |
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is open-source software licensed under the [MIT License](LICENSE).
+
+---
+
+<div align="center">
+  <b>Built with ❤️ using Tauri, React, and Rust</b>
+</div>
