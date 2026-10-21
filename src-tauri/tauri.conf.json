@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "fileex",
-        "width": 800,
-        "height": 600,
+        "title": "FileEx",
+        "width": 1100,
+        "height": 720,
+        "minWidth": 680,
+        "minHeight": 480,
+        "center": true,
         "decorations": false,
         "titleBarStyle": "Transparent",
         "resizable": true

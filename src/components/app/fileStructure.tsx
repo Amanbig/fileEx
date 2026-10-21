@@ -508,9 +508,20 @@ export function FileStructure() {
       cell: ({ row }) => {
         const fileItem = row.original
         return (
-          <div className="flex items-center gap-2 min-w-0">
+          <div 
+            className={`flex items-center gap-2 min-w-0 ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            onClick={(e) => {
+              if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
+                e.stopPropagation()
+                navigateToPath(fileItem.path)
+              }
+            }}
+          >
             {getFileIcon(fileItem.file_type, fileItem.extension)}
-            <span className="truncate font-medium text-sm" title={fileItem.name}>
+            <span 
+              className={`truncate font-medium text-sm ${fileItem.file_type === "folder" ? "group-hover:underline text-foreground" : ""}`} 
+              title={fileItem.name}
+            >
               {fileItem.name}
             </span>
           </div>
@@ -802,6 +813,26 @@ export function FileStructure() {
     return table.getRowModel().rows.map(r => r.original)
   }, [table.getRowModel().rows])
 
+  // Single click row handler: open folders directly or select files
+  const handleRowClick = (item: FileItem, row: any, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('[data-slot="checkbox"], [data-slot="dropdown-menu-trigger"], button')) {
+      return
+    }
+
+    if (e.ctrlKey || e.metaKey || (e as any).shiftKey) {
+      row.toggleSelected()
+      return
+    }
+
+    if (item.file_type === "folder") {
+      navigateToPath(item.path)
+    } else {
+      table.resetRowSelection()
+      row.toggleSelected(true)
+    }
+  }
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-background">
       {/* Commands Palette Toolbar */}
@@ -1063,11 +1094,7 @@ export function FileStructure() {
                                   <TableRow
                                     data-state={row.getIsSelected() && "selected"}
                                     onDoubleClick={() => handleItemDoubleClick(row.original)}
-                                    onClick={(e) => {
-                                      if (e.ctrlKey || e.metaKey || e.shiftKey) {
-                                        row.toggleSelected()
-                                      }
-                                    }}
+                                    onClick={(e) => handleRowClick(row.original, row, e)}
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                                   >
                                     {row.getVisibleCells().map((cell) => (

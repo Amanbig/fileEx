@@ -104,6 +104,25 @@ export default function FileGrid({
   onCopy,
   onCut,
 }: FileGridProps) {
+  const handleCardClick = (item: FileItem, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('[data-slot="checkbox"], button')) {
+      return
+    }
+
+    if (e.ctrlKey || e.metaKey || (e as any).shiftKey) {
+      onToggleSelect(item.path, e)
+      return
+    }
+
+    // Single click on a folder navigates into it immediately
+    if (item.file_type === "folder") {
+      onItemDoubleClick(item)
+    } else {
+      onToggleSelect(item.path, e)
+    }
+  }
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3 p-3">
       {items.map((item) => {
@@ -113,7 +132,7 @@ export default function FileGrid({
           <ContextMenu key={item.path}>
             <ContextMenuTrigger asChild>
               <div
-                onClick={(e) => onToggleSelect(item.path, e)}
+                onClick={(e) => handleCardClick(item, e)}
                 onDoubleClick={() => onItemDoubleClick(item)}
                 className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center ${
                   isSelected
