@@ -14,10 +14,104 @@ pub struct FileItem {
     path: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SystemPlace {
+    id: String,
+    name: String,
+    path: String,
+    icon: String,
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn get_system_places() -> Result<Vec<SystemPlace>, String> {
+    let mut places = Vec::new();
+
+    if let Some(home) = dirs::home_dir() {
+        places.push(SystemPlace {
+            id: "home".to_string(),
+            name: "Home".to_string(),
+            path: home.to_string_lossy().to_string(),
+            icon: "home".to_string(),
+        });
+    }
+
+    if let Some(desktop) = dirs::desktop_dir() {
+        places.push(SystemPlace {
+            id: "desktop".to_string(),
+            name: "Desktop".to_string(),
+            path: desktop.to_string_lossy().to_string(),
+            icon: "desktop".to_string(),
+        });
+    }
+
+    if let Some(docs) = dirs::document_dir() {
+        places.push(SystemPlace {
+            id: "documents".to_string(),
+            name: "Documents".to_string(),
+            path: docs.to_string_lossy().to_string(),
+            icon: "documents".to_string(),
+        });
+    }
+
+    if let Some(downloads) = dirs::download_dir() {
+        places.push(SystemPlace {
+            id: "downloads".to_string(),
+            name: "Downloads".to_string(),
+            path: downloads.to_string_lossy().to_string(),
+            icon: "downloads".to_string(),
+        });
+    }
+
+    if let Some(pictures) = dirs::picture_dir() {
+        places.push(SystemPlace {
+            id: "pictures".to_string(),
+            name: "Pictures".to_string(),
+            path: pictures.to_string_lossy().to_string(),
+            icon: "pictures".to_string(),
+        });
+    }
+
+    if let Some(videos) = dirs::video_dir() {
+        places.push(SystemPlace {
+            id: "videos".to_string(),
+            name: "Videos".to_string(),
+            path: videos.to_string_lossy().to_string(),
+            icon: "videos".to_string(),
+        });
+    }
+
+    if let Some(music) = dirs::audio_dir() {
+        places.push(SystemPlace {
+            id: "music".to_string(),
+            name: "Music".to_string(),
+            path: music.to_string_lossy().to_string(),
+            icon: "music".to_string(),
+        });
+    }
+
+    #[cfg(unix)]
+    places.push(SystemPlace {
+        id: "root".to_string(),
+        name: "File System".to_string(),
+        path: "/".to_string(),
+        icon: "drive".to_string(),
+    });
+
+    #[cfg(windows)]
+    places.push(SystemPlace {
+        id: "root".to_string(),
+        name: "Local Disk (C:)".to_string(),
+        path: "C:\\".to_string(),
+        icon: "drive".to_string(),
+    });
+
+    Ok(places)
 }
 
 #[tauri::command]
@@ -330,6 +424,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             greet,
+            get_system_places,
             get_current_directory,
             list_directory,
             navigate_to_path,
