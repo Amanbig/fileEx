@@ -41,6 +41,7 @@ import { toast } from "sonner"
 interface FileGridProps {
   items: FileItem[]
   selectedPaths: string[]
+  clickMode?: "single" | "double"
   onToggleSelect: (path: string, e: React.MouseEvent) => void
   onItemDoubleClick: (item: FileItem) => void
   onRename: (item: FileItem) => void
@@ -97,6 +98,7 @@ const formatFileSize = (bytes: number | null) => {
 export default function FileGrid({
   items,
   selectedPaths,
+  clickMode = "single",
   onToggleSelect,
   onItemDoubleClick,
   onRename,
@@ -116,8 +118,7 @@ export default function FileGrid({
       return
     }
 
-    // Single click on a folder navigates into it immediately
-    if (item.file_type === "folder") {
+    if (clickMode === "single" && item.file_type === "folder") {
       onItemDoubleClick(item)
     } else {
       onToggleSelect(item.path, e)

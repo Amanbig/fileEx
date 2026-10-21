@@ -83,6 +83,7 @@ import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
 import FileGrid from "./fileGrid"
 import { truncateFilename } from "@/lib/utils"
+import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 import { 
   FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
@@ -202,6 +203,7 @@ function parseBreadcrumbs(fullPath: string): BreadcrumbSegment[] {
 }
 
 export function FileStructure() {
+  const { settings } = useAppSettings()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -666,8 +668,13 @@ export function FileStructure() {
     },
   ]
 
+  const displayedData = React.useMemo(() => {
+    if (settings.showHiddenFiles) return data
+    return data.filter(item => !item.name.startsWith('.'))
+  }, [data, settings.showHiddenFiles])
+
   const table = useReactTable({
-    data,
+    data: displayedData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -694,8 +701,8 @@ export function FileStructure() {
   const totalSelectedBytes = selectedRows.reduce((acc, row) => acc + (row.original.size || 0), 0)
 
   // Folder and file count
-  const folderCount = React.useMemo(() => data.filter(item => item.file_type === "folder").length, [data])
-  const fileCount = data.length - folderCount
+  const folderCount = React.useMemo(() => displayedData.filter(item => item.file_type === "folder").length, [displayedData])
+  const fileCount = displayedData.length - folderCount
   const breadcrumbs = React.useMemo(() => parseBreadcrumbs(currentPath), [currentPath])
 
   const isAtRoot = !currentPath || currentPath === "/" || /^[a-zA-Z]:\\?$/.test(currentPath)
@@ -1188,6 +1195,7 @@ export function FileStructure() {
                         <FileGrid
                           items={filteredGridItems}
                           selectedPaths={selectedItemPaths}
+                          clickMode={settings.clickMode}
                           onToggleSelect={handleToggleGridSelect}
                           onItemDoubleClick={handleItemDoubleClick}
                           onRename={(item) => {

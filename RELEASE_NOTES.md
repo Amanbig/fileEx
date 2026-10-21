@@ -7,6 +7,13 @@ This document contains the latest release notes and history for FileEx releases.
 ## 🚀 Latest Release: v0.5.4 (October 2026)
 
 ### ✨ Major Features
+- **Application Settings & Customization**:
+  - Dedicated Settings Dialog (`Ctrl+,` shortcut, sidebar button, or TitleBar gear).
+  - **Themes**: Switch between Light, Dark, or System mode.
+  - **Typography & Font Sizing**: Choose Small (13px), Medium (14px), or Large (16px) with dynamic UI scaling; switch between System Sans, Monospace, and Elegant Serif fonts.
+  - **Explorer Navigation**: Configurable Single-Click or Double-Click folder navigation.
+  - **Hidden Files**: Toggle dotfiles (`.git`, `.config`, etc.) visibility with 1 click.
+  - Quick Reset to Defaults.
 - **Grid & Card View Mode**:
   - Seamless toggle between Table (Details) view and Grid (Cards) view with saved user preference.
   - Large file-type icons with color coding, item name, and size.
@@ -15,7 +22,7 @@ This document contains the latest release notes and history for FileEx releases.
   - Right-click on any file/folder (in Table or Grid) for instant actions (Open, Copy, Cut, Copy Path, Rename, Properties, Delete).
   - Right-click on empty canvas to create new folder/file, paste items, or refresh.
 - **Global Keyboard Shortcuts**:
-  - `Ctrl+C` (Copy), `Ctrl+X` (Cut), `Ctrl+V` (Paste), `Ctrl+A` (Select All).
+  - `Ctrl+C` (Copy), `Ctrl+X` (Cut), `Ctrl+V` (Paste), `Ctrl+A` (Select All), `Ctrl+,` (Settings).
   - `Delete` (Delete item), `F2` (Rename item), `Enter` (Open item).
   - `Alt+Left` (Back), `Alt+Right` (Forward), `Alt+Up` (Up directory).
 - **Native Dialogs & File Properties**:
@@ -30,9 +37,11 @@ This document contains the latest release notes and history for FileEx releases.
   - Clickable breadcrumbs (`Root > home > user > Documents`).
   - Click-to-edit mode with keyboard navigation.
   - Added Forward and Up-one-level (`..`) directory buttons.
-- **Title Bar & Window Controls**:
-  - Native Tauri v2 window controls (Minimize, Maximize/Restore, Close).
-  - Double-click to maximize and window drag support.
+- **Title Bar, Window Controls & UX Polish**:
+  - Native Tauri v2 window controls (Minimize, Maximize/Restore with toggle fix, Close).
+  - Version badge displayed directly in TitleBar (`v0.5.4`).
+  - Ellipsis (`...`) text truncation for long file/folder names with full-name tooltip on hover.
+  - Default window size updated to 1100x720 centered.
 - **Status Bar**:
   - Live directory item counts, search filter tracking, and selected items byte size summary.
 
