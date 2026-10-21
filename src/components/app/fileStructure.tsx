@@ -82,6 +82,7 @@ import PropertiesModal from "./propertiesModal"
 import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
 import FileGrid from "./fileGrid"
+import { truncateFilename } from "@/lib/utils"
 import { toast } from "sonner"
 import { 
   FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
@@ -507,9 +508,10 @@ export function FileStructure() {
       },
       cell: ({ row }) => {
         const fileItem = row.original
+        const displayName = truncateFilename(fileItem.name, 34)
         return (
           <div 
-            className={`flex items-center gap-2 min-w-0 ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            className={`flex items-center gap-2 min-w-0 max-w-[280px] sm:max-w-[380px] md:max-w-[480px] overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
             onClick={(e) => {
               if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
                 e.stopPropagation()
@@ -522,7 +524,7 @@ export function FileStructure() {
               className={`truncate font-medium text-sm ${fileItem.file_type === "folder" ? "group-hover:underline text-foreground" : ""}`} 
               title={fileItem.name}
             >
-              {fileItem.name}
+              {displayName}
             </span>
           </div>
         )
@@ -1067,7 +1069,7 @@ export function FileStructure() {
                 <div className="flex-1 min-h-0 rounded-md border bg-card overflow-hidden flex flex-col">
                   {viewMode === "table" ? (
                     <ScrollArea className="h-full w-full">
-                      <Table>
+                      <Table className="table-fixed w-full">
                         <TableHeader className="sticky top-0 bg-card z-10">
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
@@ -1098,7 +1100,7 @@ export function FileStructure() {
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                                   >
                                     {row.getVisibleCells().map((cell) => (
-                                      <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
+                                      <TableCell key={cell.id} style={{ width: cell.column.getSize() }} className="overflow-hidden truncate">
                                         {flexRender(
                                           cell.column.columnDef.cell,
                                           cell.getContext()

@@ -4,6 +4,7 @@ import React from "react"
 import { FileItem } from "./fileStructure"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
+import { truncateFilename } from "@/lib/utils"
 import { 
   MoreHorizontal, 
   Folder, 
@@ -201,12 +202,12 @@ export default function FileGrid({
                 </div>
 
                 {/* Bottom Label and Size */}
-                <div className="w-full space-y-0.5">
+                <div className="w-full space-y-0.5 overflow-hidden">
                   <p 
                     className="text-xs font-medium truncate w-full px-1"
                     title={item.name}
                   >
-                    {item.name}
+                    {truncateFilename(item.name, 18)}
                   </p>
                   <p className="text-[10px] text-muted-foreground truncate">
                     {item.file_type === "folder" ? "Folder" : formatFileSize(item.size)}
