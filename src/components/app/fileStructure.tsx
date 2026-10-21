@@ -17,7 +17,6 @@ import {
 import { 
   ArrowUpDown, 
   ChevronDown, 
-  MoreHorizontal, 
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -44,9 +43,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -584,88 +580,6 @@ export function FileStructure() {
       },
       size: 90,
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      size: 44,
-      cell: ({ row }) => {
-        const fileItem = row.original
-
-        const handleOpen = async () => {
-          if (fileItem.file_type === "folder") {
-            navigateToPath(fileItem.path)
-          } else {
-            try {
-              const result = await invoke<string>("open_file_with_default_app", { filePath: fileItem.path })
-              toast.success(result)
-            } catch (error) {
-              toast.error(`Failed to open file: ${error}`)
-            }
-          }
-        }
-
-        const handleRename = () => {
-          setRenameItem(fileItem)
-          setRenameOpen(true)
-        }
-
-        const handleDelete = () => {
-          setDeleteItem(fileItem)
-          setDeleteOpen(true)
-        }
-
-        const handleProperties = () => {
-          setPropertiesPath(fileItem.path)
-          setPropertiesOpen(true)
-        }
-
-        const handleCopyPath = () => {
-          navigator.clipboard.writeText(fileItem.path)
-            .then(() => toast.success("Path copied to clipboard"))
-            .catch(() => toast.error("Failed to copy path"))
-        }
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-7 w-7 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={handleOpen}>
-                {fileItem.file_type === "folder" ? "Open Folder" : "Open File"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleCopyPath}>
-                Copy Path
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(fileItem.name)}
-              >
-                Copy Name
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleRename}>
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleProperties}>
-                Properties
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive focus:text-destructive"
-                onClick={handleDelete}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
-    },
   ]
 
   const displayedData = React.useMemo(() => {
@@ -1138,6 +1052,12 @@ export function FileStructure() {
                                     toast.success("Path copied to clipboard")
                                   }}>
                                     Copy Path
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => {
+                                    navigator.clipboard.writeText(row.original.name)
+                                    toast.success("Name copied to clipboard")
+                                  }}>
+                                    Copy Name
                                   </ContextMenuItem>
                                   <ContextMenuSeparator />
                                   <ContextMenuItem onClick={() => {

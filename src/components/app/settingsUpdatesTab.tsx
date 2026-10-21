@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { 
@@ -86,7 +85,6 @@ export default function SettingsUpdatesTab() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgressPayload | null>(null)
   const [downloadedFilePath, setDownloadedFilePath] = useState<string | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
-  const [showAllAssets, setShowAllAssets] = useState(false)
 
   // Fetch installation information on mount
   useEffect(() => {
@@ -411,53 +409,6 @@ export default function SettingsUpdatesTab() {
         </div>
       )}
 
-      {/* Manual / All Assets Option for Flexibility */}
-      {release && (
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Release Packages
-            </Label>
-            <button
-              type="button"
-              onClick={() => setShowAllAssets(!showAllAssets)}
-              className="text-[11px] text-primary hover:underline"
-            >
-              {showAllAssets ? "Hide packages" : `View all packages (${release.assets.length})`}
-            </button>
-          </div>
-
-          {showAllAssets && (
-            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-              {release.assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="flex items-center justify-between p-2 rounded border bg-muted/10 text-xs"
-                >
-                  <div className="truncate mr-2">
-                    <p className="font-mono text-[11px] truncate font-medium">{asset.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatBytes(asset.size)}</p>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleStartDownload(asset)}
-                      disabled={isDownloading}
-                      className="h-7 px-2 text-[11px] gap-1"
-                    >
-                      <HardDriveDownload className="h-3 w-3" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       <Separator />
 
       {/* Links & Safety */}
@@ -471,6 +422,19 @@ export default function SettingsUpdatesTab() {
             className="flex items-center gap-1 text-primary hover:underline font-medium text-xs"
           >
             <span>View Changelog on GitHub</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Open Source License</span>
+          <a
+            href="https://github.com/Amanbig/fileEx/blob/main/LICENSE"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-primary hover:underline font-medium text-xs"
+          >
+            <span>MIT License</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

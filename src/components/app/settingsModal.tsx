@@ -410,6 +410,18 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
                   GitHub Repository
                 </a>
               </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-[11px]">License</span>
+                <a
+                  href="https://github.com/Amanbig/fileEx/blob/main/LICENSE"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+                >
+                  MIT License
+                </a>
+              </div>
             </div>
           )}
         </div>

@@ -3,10 +3,8 @@
 import React from "react"
 import { FileItem } from "./fileStructure"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
 import { truncateFilename } from "@/lib/utils"
 import { 
-  MoreHorizontal, 
   Folder, 
   File, 
   FileText, 
@@ -29,13 +27,6 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
 
 interface FileGridProps {
@@ -156,45 +147,6 @@ export default function FileGrid({
                       onCheckedChange={() => onToggleSelect(item.path, { ctrlKey: true } as any)}
                     />
                   </div>
-
-                  {/* Quick Action Dropdown */}
-                  <div 
-                    className="pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full">
-                          <MoreHorizontal className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onItemDoubleClick(item)}>
-                          {item.file_type === "folder" ? "Open Folder" : "Open File"}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onCopy([item.path])}>
-                          Copy
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onCut([item.path])}>
-                          Cut
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onRename(item)}>
-                          Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onProperties(item)}>
-                          Properties
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => onDelete(item)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
                 </div>
 
                 {/* Center Icon */}
@@ -240,6 +192,12 @@ export default function FileGrid({
                 toast.success("Path copied to clipboard")
               }}>
                 Copy Path
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => {
+                navigator.clipboard.writeText(item.name)
+                toast.success("Name copied to clipboard")
+              }}>
+                Copy Name
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem onClick={() => onRename(item)}>

@@ -53,6 +53,9 @@ This document contains the latest release notes and history for FileEx releases.
   - Native Tauri v2 window controls (Minimize, Maximize/Restore with toggle fix, Close).
   - Version badge displayed directly in TitleBar (`v0.5.4`).
   - Ellipsis (`...`) text truncation for long file/folder names with full-name tooltip on hover.
+  - Removed redundant `...` action column and card buttons in favor of the full-featured right-click context menu (including new "Copy Name" action).
+  - Harmonized dark mode color palette (unified neutral-slate background, cards, and sidebar with vibrant blue brand accents).
+  - Added MIT License and repository links.
   - Default window size updated to 1100x720 centered.
 - **Status Bar**:
   - Live directory item counts, search filter tracking, and selected items byte size summary.
