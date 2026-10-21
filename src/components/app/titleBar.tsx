@@ -41,10 +41,22 @@ export default function TitleBar() {
 
   const handleToggleMaximize = async () => {
     try {
-      await appWindow.toggleMaximize();
-      setIsMaximized(await appWindow.isMaximized());
-    } catch (err) {
-      console.error("Failed to toggle maximize:", err);
+      const maximized = await appWindow.isMaximized();
+      if (maximized) {
+        await appWindow.unmaximize();
+        setIsMaximized(false);
+      } else {
+        await appWindow.maximize();
+        setIsMaximized(true);
+      }
+    } catch {
+      try {
+        await appWindow.toggleMaximize();
+        const current = await appWindow.isMaximized();
+        setIsMaximized(current);
+      } catch (err) {
+        console.error("Failed to toggle maximize:", err);
+      }
     }
   };
 
