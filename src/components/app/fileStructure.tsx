@@ -27,7 +27,15 @@ import {
   Check,
   Search,
   ChevronRight,
-  Edit2
+  Edit2,
+  LayoutList,
+  LayoutGrid,
+  Scissors,
+  Trash2,
+  ExternalLink,
+  Info,
+  FolderPlus,
+  FilePlus
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -41,7 +49,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Table,
@@ -51,11 +76,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import CommandsPallet from "./commandsPallet"
+import CommandsPallet, { getClipboardState, setClipboardState, executePaste } from "./commandsPallet"
 import PlacesSidebar from "./placesSidebar"
 import PropertiesModal from "./propertiesModal"
 import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
+import FileGrid from "./fileGrid"
+import { truncateFilename } from "@/lib/utils"
+import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 import { 
   FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
@@ -175,6 +203,7 @@ function parseBreadcrumbs(fullPath: string): BreadcrumbSegment[] {
 }
 
 export function FileStructure() {
+  const { settings } = useAppSettings()
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -195,6 +224,15 @@ export function FileStructure() {
     actions: 50,
   })
 
+  // View mode: "table" or "grid"
+  const [viewMode, setViewMode] = React.useState<"table" | "grid">(() => {
+    try {
+      return (localStorage.getItem("fileex_view_mode") as "table" | "grid") || "table"
+    } catch {
+      return "table"
+    }
+  })
+
   // Modal states for Native Dialogs & Properties
   const [propertiesPath, setPropertiesPath] = React.useState<string | null>(null)
   const [propertiesOpen, setPropertiesOpen] = React.useState(false)
@@ -203,7 +241,22 @@ export function FileStructure() {
   const [deleteItem, setDeleteItem] = React.useState<FileItem | null>(null)
   const [deleteOpen, setDeleteOpen] = React.useState(false)
 
+  // Canvas new folder / new file modal states
+  const [newFolderDialogOpen, setNewFolderDialogOpen] = React.useState(false)
+  const [newFolderInput, setNewFolderInput] = React.useState("")
+  const [newFileDialogOpen, setNewFileDialogOpen] = React.useState(false)
+  const [newFileInput, setNewFileInput] = React.useState("")
+
   const pathInputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleToggleViewMode = (mode: "table" | "grid") => {
+    setViewMode(mode)
+    try {
+      localStorage.setItem("fileex_view_mode", mode)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   // Load initial directory
   React.useEffect(() => {
@@ -328,7 +381,7 @@ export function FileStructure() {
       setCopiedPath(true)
       toast.success("Path copied to clipboard")
       setTimeout(() => setCopiedPath(false), 2000)
-    } catch (err) {
+    } catch {
       toast.error("Failed to copy path")
     }
   }
@@ -359,7 +412,63 @@ export function FileStructure() {
     setRowSelection({})
   }
 
-  // Columns definition
+  // Handle Canvas New Folder
+  const handleCanvasCreateFolder = async () => {
+    const trimmed = newFolderInput.trim()
+    if (!trimmed) {
+      toast.error("Please enter a folder name")
+      return
+    }
+    try {
+      await invoke("create_folder", { path: currentPath, name: trimmed })
+      toast.success(`Created folder "${trimmed}"`)
+      setNewFolderInput("")
+      setNewFolderDialogOpen(false)
+      handleRefresh()
+    } catch (err) {
+      toast.error(`Failed to create folder: ${err}`)
+    }
+  }
+
+  // Handle Canvas New File
+  const handleCanvasCreateFile = async () => {
+    const trimmed = newFileInput.trim()
+    if (!trimmed) {
+      toast.error("Please enter a file name")
+      return
+    }
+    try {
+      await invoke("create_file", { path: currentPath, name: trimmed })
+      toast.success(`Created file "${trimmed}"`)
+      setNewFileInput("")
+      setNewFileDialogOpen(false)
+      handleRefresh()
+    } catch (err) {
+      toast.error(`Failed to create file: ${err}`)
+    }
+  }
+
+  // Handle Clipboard Copy
+  const handleCopyItems = (paths: string[]) => {
+    if (paths.length === 0) return
+    setClipboardState(paths, 'copy')
+    navigator.clipboard.writeText(paths.join("\n"))
+    toast.success(`Copied ${paths.length} item(s) to clipboard`)
+  }
+
+  // Handle Clipboard Cut
+  const handleCutItems = (paths: string[]) => {
+    if (paths.length === 0) return
+    setClipboardState(paths, 'cut')
+    toast.success(`Cut ${paths.length} item(s) to clipboard`)
+  }
+
+  // Handle Clipboard Paste
+  const handlePasteItems = () => {
+    executePaste(currentPath, handleRefresh)
+  }
+
+  // Columns definition for Table view
   const columns: ColumnDef<FileItem>[] = [
     {
       id: "select",
@@ -401,11 +510,23 @@ export function FileStructure() {
       },
       cell: ({ row }) => {
         const fileItem = row.original
+        const displayName = truncateFilename(fileItem.name, 34)
         return (
-          <div className="flex items-center gap-2 min-w-0">
+          <div 
+            className={`flex items-center gap-2 min-w-0 max-w-[280px] sm:max-w-[380px] md:max-w-[480px] overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            onClick={(e) => {
+              if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
+                e.stopPropagation()
+                navigateToPath(fileItem.path)
+              }
+            }}
+          >
             {getFileIcon(fileItem.file_type, fileItem.extension)}
-            <span className="truncate font-medium text-sm" title={fileItem.name}>
-              {fileItem.name}
+            <span 
+              className={`truncate font-medium text-sm ${fileItem.file_type === "folder" ? "group-hover:underline text-foreground" : ""}`} 
+              title={fileItem.name}
+            >
+              {displayName}
             </span>
           </div>
         )
@@ -547,8 +668,13 @@ export function FileStructure() {
     },
   ]
 
+  const displayedData = React.useMemo(() => {
+    if (settings.showHiddenFiles) return data
+    return data.filter(item => !item.name.startsWith('.'))
+  }, [data, settings.showHiddenFiles])
+
   const table = useReactTable({
-    data,
+    data: displayedData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -575,11 +701,146 @@ export function FileStructure() {
   const totalSelectedBytes = selectedRows.reduce((acc, row) => acc + (row.original.size || 0), 0)
 
   // Folder and file count
-  const folderCount = React.useMemo(() => data.filter(item => item.file_type === "folder").length, [data])
-  const fileCount = data.length - folderCount
+  const folderCount = React.useMemo(() => displayedData.filter(item => item.file_type === "folder").length, [displayedData])
+  const fileCount = displayedData.length - folderCount
   const breadcrumbs = React.useMemo(() => parseBreadcrumbs(currentPath), [currentPath])
 
   const isAtRoot = !currentPath || currentPath === "/" || /^[a-zA-Z]:\\?$/.test(currentPath)
+
+  // Grid Selection Handler
+  const handleToggleGridSelect = (path: string, e: React.MouseEvent) => {
+    const row = table.getRowModel().rows.find(r => r.original.path === path)
+    if (!row) return
+
+    if (e.ctrlKey || e.metaKey || (e as any).shiftKey) {
+      row.toggleSelected()
+    } else {
+      table.resetRowSelection()
+      row.toggleSelected(true)
+    }
+  }
+
+  // Global Keyboard Shortcuts Listener
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      if (['INPUT', 'TEXTAREA'].includes(target?.tagName) || target?.isContentEditable) {
+        return
+      }
+
+      const selected = table.getFilteredSelectedRowModel().rows.map(r => r.original)
+
+      // Ctrl + A / Cmd + A: Select All
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault()
+        table.toggleAllPageRowsSelected(true)
+        return
+      }
+
+      // Ctrl + C / Cmd + C: Copy
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        if (selected.length > 0) {
+          e.preventDefault()
+          handleCopyItems(selected.map(i => i.path))
+        }
+        return
+      }
+
+      // Ctrl + X / Cmd + X: Cut
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
+        if (selected.length > 0) {
+          e.preventDefault()
+          handleCutItems(selected.map(i => i.path))
+        }
+        return
+      }
+
+      // Ctrl + V / Cmd + V: Paste
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault()
+        handlePasteItems()
+        return
+      }
+
+      // Delete key: Delete selected item(s)
+      if (e.key === 'Delete') {
+        if (selected.length === 1) {
+          e.preventDefault()
+          setDeleteItem(selected[0])
+          setDeleteOpen(true)
+        }
+        return
+      }
+
+      // F2: Rename single selected item
+      if (e.key === 'F2') {
+        if (selected.length === 1) {
+          e.preventDefault()
+          setRenameItem(selected[0])
+          setRenameOpen(true)
+        }
+        return
+      }
+
+      // Enter: Open single selected item
+      if (e.key === 'Enter') {
+        if (selected.length === 1) {
+          e.preventDefault()
+          handleItemDoubleClick(selected[0])
+        }
+        return
+      }
+
+      // Alt + Left: Navigate Back
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault()
+        navigateBack()
+        return
+      }
+
+      // Alt + Right: Navigate Forward
+      if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault()
+        navigateForward()
+        return
+      }
+
+      // Alt + Up: Navigate Up
+      if (e.altKey && e.key === 'ArrowUp') {
+        e.preventDefault()
+        navigateUp()
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [table, currentPath, historyIndex, navigationHistory])
+
+  // Get filtered items for Grid View
+  const filteredGridItems = React.useMemo(() => {
+    return table.getRowModel().rows.map(r => r.original)
+  }, [table.getRowModel().rows])
+
+  // Single click row handler: open folders directly or select files
+  const handleRowClick = (item: FileItem, row: any, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('[data-slot="checkbox"], [data-slot="dropdown-menu-trigger"], button')) {
+      return
+    }
+
+    if (e.ctrlKey || e.metaKey || (e as any).shiftKey) {
+      row.toggleSelected()
+      return
+    }
+
+    if (item.file_type === "folder") {
+      navigateToPath(item.path)
+    } else {
+      table.resetRowSelection()
+      row.toggleSelected(true)
+    }
+  }
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-background">
@@ -603,299 +864,504 @@ export function FileStructure() {
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Navigation and Breadcrumbs Bar */}
           <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20 flex-shrink-0">
-        {/* Navigation History & Direction Buttons */}
-        <div className="flex items-center gap-0.5">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={navigateBack}
-            disabled={loading || historyIndex <= 0}
-            className="h-8 w-8 p-0"
-            title="Back (Alt+Left)"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+            {/* Navigation History & Direction Buttons */}
+            <div className="flex items-center gap-0.5">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={navigateBack}
+                disabled={loading || historyIndex <= 0}
+                className="h-8 w-8 p-0"
+                title="Back (Alt+Left)"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
 
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={navigateForward}
-            disabled={loading || historyIndex >= navigationHistory.length - 1}
-            className="h-8 w-8 p-0"
-            title="Forward (Alt+Right)"
-          >
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={navigateForward}
+                disabled={loading || historyIndex >= navigationHistory.length - 1}
+                className="h-8 w-8 p-0"
+                title="Forward (Alt+Right)"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
 
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={navigateUp}
-            disabled={loading || isAtRoot}
-            className="h-8 w-8 p-0"
-            title="Up to parent folder"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={navigateUp}
+                disabled={loading || isAtRoot}
+                className="h-8 w-8 p-0"
+                title="Up to parent folder (Alt+Up)"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
 
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={navigateHome}
-            disabled={loading}
-            className="h-8 w-8 p-0"
-            title="Home"
-          >
-            <Home className="h-4 w-4" />
-          </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={navigateHome}
+                disabled={loading}
+                className="h-8 w-8 p-0"
+                title="Home"
+              >
+                <Home className="h-4 w-4" />
+              </Button>
 
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="h-8 w-8 p-0"
-            title="Refresh"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-
-        {/* Breadcrumb Path Bar with Direct Edit Mode */}
-        <div className="flex-1 min-w-0 flex items-center bg-background border rounded-md px-2 h-8 shadow-xs focus-within:ring-1 focus-within:ring-ring">
-          {isEditingPath ? (
-            <div className="flex items-center w-full gap-1">
-              <Input
-                ref={pathInputRef}
-                value={pathInput}
-                onChange={(e) => setPathInput(e.target.value)}
-                onBlur={() => {
-                  setIsEditingPath(false)
-                  setPathInput(currentPath)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setIsEditingPath(false)
-                    navigateToPath(pathInput.trim())
-                  } else if (e.key === "Escape") {
-                    setIsEditingPath(false)
-                    setPathInput(currentPath)
-                  }
-                }}
-                className="h-7 border-0 p-0 shadow-none font-mono text-xs focus-visible:ring-0"
-                placeholder="Enter path and press Enter..."
-              />
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+                className="h-8 w-8 p-0"
+                title="Refresh"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
-          ) : (
-            <div 
-              className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar cursor-pointer py-1 select-none"
-              onClick={() => {
-                setPathInput(currentPath)
-                setIsEditingPath(true)
-              }}
-            >
-              <div className="flex items-center gap-0.5 flex-1 min-w-0">
-                {breadcrumbs.map((crumb, idx) => (
-                  <React.Fragment key={crumb.path + idx}>
-                    {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/60 shrink-0" />}
+
+            {/* Breadcrumb Path Bar with Direct Edit Mode */}
+            <div className="flex-1 min-w-0 flex items-center bg-background border rounded-md px-2 h-8 shadow-xs focus-within:ring-1 focus-within:ring-ring">
+              {isEditingPath ? (
+                <div className="flex items-center w-full gap-1">
+                  <Input
+                    ref={pathInputRef}
+                    value={pathInput}
+                    onChange={(e) => setPathInput(e.target.value)}
+                    onBlur={() => {
+                      setIsEditingPath(false)
+                      setPathInput(currentPath)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setIsEditingPath(false)
+                        navigateToPath(pathInput.trim())
+                      } else if (e.key === "Escape") {
+                        setIsEditingPath(false)
+                        setPathInput(currentPath)
+                      }
+                    }}
+                    className="h-7 border-0 p-0 shadow-none font-mono text-xs focus-visible:ring-0"
+                    placeholder="Enter path and press Enter..."
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar cursor-pointer py-1 select-none"
+                  onClick={() => {
+                    setPathInput(currentPath)
+                    setIsEditingPath(true)
+                  }}
+                >
+                  <div className="flex items-center gap-0.5 flex-1 min-w-0">
+                    {breadcrumbs.map((crumb, idx) => (
+                      <React.Fragment key={crumb.path + idx}>
+                        {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/60 shrink-0" />}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigateToPath(crumb.path)
+                          }}
+                          className="px-1.5 py-0.5 text-xs rounded hover:bg-accent hover:text-accent-foreground font-medium truncate shrink-0 max-w-[140px]"
+                          title={crumb.path}
+                        >
+                          {crumb.name}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1 ml-auto shrink-0">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        navigateToPath(crumb.path)
+                        setPathInput(currentPath)
+                        setIsEditingPath(true)
                       }}
-                      className="px-1.5 py-0.5 text-xs rounded hover:bg-accent hover:text-accent-foreground font-medium truncate shrink-0 max-w-[140px]"
-                      title={crumb.path}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      title="Edit path directly"
                     >
-                      {crumb.name}
+                      <Edit2 className="h-3 w-3" />
                     </button>
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-1 ml-auto shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setPathInput(currentPath)
-                    setIsEditingPath(true)
-                  }}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
-                  title="Edit path directly"
-                >
-                  <Edit2 className="h-3 w-3" />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleCopyCurrentPath()
-                  }}
-                  className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
-                  title="Copy path"
-                >
-                  {copiedPath ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopyCurrentPath()
+                      }}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      title="Copy path"
+                    >
+                      {copiedPath ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Search Input */}
-        <div className="relative w-44 md:w-56 shrink-0">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search items..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="pl-8 h-8 text-xs"
-          />
-        </div>
+            {/* Search Input */}
+            <div className="relative w-40 md:w-52 shrink-0">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search..."
+                value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+                onChange={(event) =>
+                  table.getColumn("name")?.setFilterValue(event.target.value)
+                }
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
 
-        {/* Column Visibility Selector */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs shrink-0">
-              Columns <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize text-xs"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id === "date_modified" ? "Date Modified" : column.id.replace("_", " ")}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            {/* View Mode Switcher */}
+            <div className="flex items-center border rounded-md p-0.5 bg-muted/30 shrink-0">
+              <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => handleToggleViewMode("table")}
+                title="Table view"
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => handleToggleViewMode("grid")}
+                title="Grid view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+            </div>
 
-      {/* Main File Table Area */}
-      <div className="flex-1 min-h-0 p-3 overflow-hidden flex flex-col">
-        <div className="flex-1 min-h-0 rounded-md border bg-card overflow-hidden flex flex-col">
-          <ScrollArea className="h-full w-full">
-            <Table>
-              <TableHeader className="sticky top-0 bg-card z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
+            {/* Column Visibility Selector (only relevant for Table view) */}
+            {viewMode === "table" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1 text-xs shrink-0">
+                    Columns <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
                       return (
-                        <TableHead key={header.id} style={{ width: header.getSize() }}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className="capitalize text-xs"
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {column.id === "date_modified" ? "Date Modified" : column.id.replace("_", " ")}
+                        </DropdownMenuCheckboxItem>
                       )
                     })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      onDoubleClick={() => handleItemDoubleClick(row.original)}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Main Canvas Context Menu wrapper */}
+          <ContextMenu>
+            <ContextMenuTrigger asChild>
+              <div className="flex-1 min-h-0 p-3 overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0 rounded-md border bg-card overflow-hidden flex flex-col">
+                  {viewMode === "table" ? (
+                    <ScrollArea className="h-full w-full">
+                      <Table className="table-fixed w-full">
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                              {headerGroup.headers.map((header) => {
+                                return (
+                                  <TableHead key={header.id} style={{ width: header.getSize() }}>
+                                    {header.isPlaceholder
+                                      ? null
+                                      : flexRender(
+                                          header.column.columnDef.header,
+                                          header.getContext()
+                                        )}
+                                  </TableHead>
+                                )
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableHeader>
+                        <TableBody>
+                          {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                              <ContextMenu key={row.id}>
+                                <ContextMenuTrigger asChild>
+                                  <TableRow
+                                    data-state={row.getIsSelected() && "selected"}
+                                    onDoubleClick={() => handleItemDoubleClick(row.original)}
+                                    onClick={(e) => handleRowClick(row.original, row, e)}
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                  >
+                                    {row.getVisibleCells().map((cell) => (
+                                      <TableCell key={cell.id} style={{ width: cell.column.getSize() }} className="overflow-hidden truncate">
+                                        {flexRender(
+                                          cell.column.columnDef.cell,
+                                          cell.getContext()
+                                        )}
+                                      </TableCell>
+                                    ))}
+                                  </TableRow>
+                                </ContextMenuTrigger>
+                                <ContextMenuContent className="w-48">
+                                  <ContextMenuItem onClick={() => handleItemDoubleClick(row.original)}>
+                                    <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                    {row.original.file_type === "folder" ? "Open Folder" : "Open"}
+                                    <ContextMenuShortcut>↵</ContextMenuShortcut>
+                                  </ContextMenuItem>
+                                  <ContextMenuSeparator />
+                                  <ContextMenuItem onClick={() => handleCopyItems([row.original.path])}>
+                                    <Copy className="h-3.5 w-3.5 mr-2" />
+                                    Copy
+                                    <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => handleCutItems([row.original.path])}>
+                                    <Scissors className="h-3.5 w-3.5 mr-2" />
+                                    Cut
+                                    <ContextMenuShortcut>Ctrl+X</ContextMenuShortcut>
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => {
+                                    navigator.clipboard.writeText(row.original.path)
+                                    toast.success("Path copied to clipboard")
+                                  }}>
+                                    Copy Path
+                                  </ContextMenuItem>
+                                  <ContextMenuSeparator />
+                                  <ContextMenuItem onClick={() => {
+                                    setRenameItem(row.original)
+                                    setRenameOpen(true)
+                                  }}>
+                                    Rename
+                                    <ContextMenuShortcut>F2</ContextMenuShortcut>
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => {
+                                    setPropertiesPath(row.original.path)
+                                    setPropertiesOpen(true)
+                                  }}>
+                                    <Info className="h-3.5 w-3.5 mr-2" />
+                                    Properties
+                                  </ContextMenuItem>
+                                  <ContextMenuSeparator />
+                                  <ContextMenuItem 
+                                    variant="destructive"
+                                    onClick={() => {
+                                      setDeleteItem(row.original)
+                                      setDeleteOpen(true)
+                                    }}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                    Delete
+                                    <ContextMenuShortcut>Del</ContextMenuShortcut>
+                                  </ContextMenuItem>
+                                </ContextMenuContent>
+                              </ContextMenu>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell
+                                colSpan={columns.length}
+                                className="h-32 text-center text-muted-foreground text-sm"
+                              >
+                                {loading ? (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                                    <span>Reading folder contents...</span>
+                                  </div>
+                                ) : (
+                                  "No files or folders found."
+                                )}
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-32 text-center text-muted-foreground text-sm"
-                    >
-                      {loading ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                          <span>Reading folder contents...</span>
-                        </div>
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  ) : (
+                    <ScrollArea className="h-full w-full">
+                      {filteredGridItems.length ? (
+                        <FileGrid
+                          items={filteredGridItems}
+                          selectedPaths={selectedItemPaths}
+                          clickMode={settings.clickMode}
+                          onToggleSelect={handleToggleGridSelect}
+                          onItemDoubleClick={handleItemDoubleClick}
+                          onRename={(item) => {
+                            setRenameItem(item)
+                            setRenameOpen(true)
+                          }}
+                          onDelete={(item) => {
+                            setDeleteItem(item)
+                            setDeleteOpen(true)
+                          }}
+                          onProperties={(item) => {
+                            setPropertiesPath(item.path)
+                            setPropertiesOpen(true)
+                          }}
+                          onCopy={handleCopyItems}
+                          onCut={handleCutItems}
+                        />
                       ) : (
-                        "No files or folders found."
+                        <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
+                          {loading ? (
+                            <div className="flex items-center gap-2">
+                              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                              <span>Reading folder contents...</span>
+                            </div>
+                          ) : (
+                            "No files or folders found."
+                          )}
+                        </div>
                       )}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </div>
-      </div>
+                    </ScrollArea>
+                  )}
+                </div>
+              </div>
+            </ContextMenuTrigger>
 
-      {/* Bottom Status Bar */}
-      <footer className="h-7 border-t bg-muted/40 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none">
-        <div className="flex items-center gap-3">
-          <span>
-            {loading ? "Loading..." : `${data.length} item${data.length === 1 ? '' : 's'} (${folderCount} folder${folderCount === 1 ? '' : 's'}, ${fileCount} file${fileCount === 1 ? '' : 's'})`}
-          </span>
-          {table.getColumn("name")?.getFilterValue() ? (
-            <span className="text-primary font-medium">
-              (Filtered: {table.getRowModel().rows.length} shown)
-            </span>
-          ) : null}
-        </div>
+            {/* Background Canvas Context Menu */}
+            <ContextMenuContent className="w-48">
+              <ContextMenuItem onClick={() => setNewFolderDialogOpen(true)}>
+                <FolderPlus className="h-3.5 w-3.5 mr-2 text-sky-500" />
+                New Folder
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => setNewFileDialogOpen(true)}>
+                <FilePlus className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                New File
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem 
+                onClick={handlePasteItems}
+                disabled={getClipboardState().items.length === 0}
+              >
+                Paste
+                <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+              </ContextMenuItem>
+              <ContextMenuItem onClick={handleRefresh}>
+                <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                Refresh
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => table.toggleAllPageRowsSelected(true)}>
+                Select All
+                <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
 
-        <div className="flex items-center gap-4">
-          {selectedCount > 0 ? (
-            <span className="font-medium text-foreground">
-              {selectedCount} item{selectedCount === 1 ? '' : 's'} selected {totalSelectedBytes > 0 ? `(${formatFileSize(totalSelectedBytes)})` : ''}
-            </span>
-          ) : (
-            <span>Ready</span>
-          )}
-        </div>
-      </footer>
+          {/* Bottom Status Bar */}
+          <footer className="h-7 border-t bg-muted/40 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none">
+            <div className="flex items-center gap-3">
+              <span>
+                {loading ? "Loading..." : `${data.length} item${data.length === 1 ? '' : 's'} (${folderCount} folder${folderCount === 1 ? '' : 's'}, ${fileCount} file${fileCount === 1 ? '' : 's'})`}
+              </span>
+              {table.getColumn("name")?.getFilterValue() ? (
+                <span className="text-primary font-medium">
+                  (Filtered: {table.getRowModel().rows.length} shown)
+                </span>
+              ) : null}
+            </div>
 
-      {/* Properties Modal */}
-      <PropertiesModal
-        open={propertiesOpen}
-        onOpenChange={setPropertiesOpen}
-        itemPath={propertiesPath}
-        onNavigateToFolder={(path) => navigateToPath(path)}
-      />
+            <div className="flex items-center gap-4">
+              {selectedCount > 0 ? (
+                <span className="font-medium text-foreground">
+                  {selectedCount} item{selectedCount === 1 ? '' : 's'} selected {totalSelectedBytes > 0 ? `(${formatFileSize(totalSelectedBytes)})` : ''}
+                </span>
+              ) : (
+                <span>Ready</span>
+              )}
+            </div>
+          </footer>
 
-      {/* Rename Modal */}
-      <RenameModal
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-        item={renameItem}
-        onRenamed={handleRefresh}
-      />
+          {/* Canvas New Folder Dialog */}
+          <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>New Folder</DialogTitle>
+                <DialogDescription>Create a new folder in this directory.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <Label htmlFor="canvas-folder-name" className="text-xs">Folder Name</Label>
+                <Input
+                  id="canvas-folder-name"
+                  value={newFolderInput}
+                  onChange={(e) => setNewFolderInput(e.target.value)}
+                  placeholder="New Folder"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCanvasCreateFolder()
+                  }}
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setNewFolderDialogOpen(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleCanvasCreateFolder} disabled={!newFolderInput.trim()}>Create</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-      {/* Delete Confirmation Modal */}
-      <DeleteModal
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        item={deleteItem}
-        onDeleted={handleRefresh}
-      />
+          {/* Canvas New File Dialog */}
+          <Dialog open={newFileDialogOpen} onOpenChange={setNewFileDialogOpen}>
+            <DialogContent className="sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle>New File</DialogTitle>
+                <DialogDescription>Create a new file in this directory.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <Label htmlFor="canvas-file-name" className="text-xs">File Name (with extension)</Label>
+                <Input
+                  id="canvas-file-name"
+                  value={newFileInput}
+                  onChange={(e) => setNewFileInput(e.target.value)}
+                  placeholder="example.txt"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCanvasCreateFile()
+                  }}
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setNewFileDialogOpen(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleCanvasCreateFile} disabled={!newFileInput.trim()}>Create</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Properties Modal */}
+          <PropertiesModal
+            open={propertiesOpen}
+            onOpenChange={setPropertiesOpen}
+            itemPath={propertiesPath}
+            onNavigateToFolder={(path) => navigateToPath(path)}
+          />
+
+          {/* Rename Modal */}
+          <RenameModal
+            open={renameOpen}
+            onOpenChange={setRenameOpen}
+            item={renameItem}
+            onRenamed={handleRefresh}
+          />
+
+          {/* Delete Confirmation Modal */}
+          <DeleteModal
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+            item={deleteItem}
+            onDeleted={handleRefresh}
+          />
         </div>
       </div>
     </div>

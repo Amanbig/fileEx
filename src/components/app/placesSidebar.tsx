@@ -15,11 +15,13 @@ import {
   Pin, 
   X, 
   PanelLeftClose, 
-  PanelLeftOpen
+  PanelLeftOpen,
+  Settings
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import SettingsModal from "./settingsModal"
 import { toast } from "sonner"
 
 export interface SystemPlace {
@@ -46,6 +48,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
   const [places, setPlaces] = useState<SystemPlace[]>([])
   const [pinned, setPinned] = useState<PinnedPlace[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Load system places from Rust backend
   useEffect(() => {
@@ -312,6 +315,37 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
             </div>
           </div>
         </ScrollArea>
+
+        {/* Sidebar Footer with Settings */}
+        <div className="p-2 border-t border-border/40 shrink-0">
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(true)}
+                  className="w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                  <Settings className="h-4 w-4 shrink-0" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-medium">Settings (Ctrl+,)</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              <span>Settings</span>
+            </button>
+          )}
+        </div>
+
+        <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       </aside>
     </TooltipProvider>
   )
