@@ -52,6 +52,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import CommandsPallet from "./commandsPallet"
+import PlacesSidebar from "./placesSidebar"
 import { toast } from "sonner"
 import { 
   FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
@@ -587,8 +588,18 @@ export function FileStructure() {
         onItemsDeleted={handleItemsDeleted}
       />
       
-      {/* Navigation and Breadcrumbs Bar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20 flex-shrink-0">
+      {/* Body: Sidebar + Main Content */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        {/* Quick Access Sidebar */}
+        <PlacesSidebar
+          currentPath={currentPath}
+          onNavigate={(path) => navigateToPath(path)}
+        />
+
+        {/* Main Explorer View */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* Navigation and Breadcrumbs Bar */}
+          <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20 flex-shrink-0">
         {/* Navigation History & Direction Buttons */}
         <div className="flex items-center gap-0.5">
           <Button 
@@ -858,6 +869,8 @@ export function FileStructure() {
           )}
         </div>
       </footer>
+        </div>
+      </div>
     </div>
   )
 }
