@@ -21,10 +21,12 @@ import {
   RotateCcw, 
   Github, 
   Check,
-  MousePointerClick
+  MousePointerClick,
+  DownloadCloud
 } from "lucide-react"
 import { useAppSettings, FontSize } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
+import SettingsUpdatesTab from "./settingsUpdatesTab"
 
 interface SettingsModalProps {
   open: boolean
@@ -33,7 +35,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { settings, updateSettings, resetDefaults, theme, setTheme } = useAppSettings()
-  const [activeTab, setActiveTab] = useState<"appearance" | "typography" | "explorer" | "about">("appearance")
+  const [activeTab, setActiveTab] = useState<"appearance" | "typography" | "explorer" | "updates" | "about">("appearance")
 
   const handleReset = () => {
     resetDefaults()
@@ -92,6 +94,18 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
           >
             <FolderSync className="h-3.5 w-3.5" />
             Explorer
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("updates")}
+            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
+              activeTab === "updates"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <DownloadCloud className="h-3.5 w-3.5" />
+            Updates
           </button>
           <button
             type="button"
@@ -358,6 +372,9 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
               </div>
             </div>
           )}
+
+          {/* Updates Tab */}
+          {activeTab === "updates" && <SettingsUpdatesTab />}
 
           {/* About Tab */}
           {activeTab === "about" && (

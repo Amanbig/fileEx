@@ -7,6 +7,18 @@ This document contains the latest release notes and history for FileEx releases.
 ## 🚀 Latest Release: v0.5.4 (October 2026)
 
 ### ✨ Major Features
+- **In-App Updater & Release Manager**:
+  - Dedicated **Updates** tab in Settings drawer.
+  - Automatically queries GitHub Releases API (`api.github.com/repos/Amanbig/fileEx/releases/latest`) and compares semantic versions.
+  - **Smart Package Matching**: Automatically detects user's OS and installation method:
+    - **Linux**: Matches `.deb` (Debian/Ubuntu), `.AppImage`, or `.rpm` according to architecture (`x86_64` / `aarch64`).
+    - **Windows**: Matches `.msi` or `.exe` setup installers.
+    - **macOS**: Matches `.dmg` disk images.
+  - **Download Streaming with Live Progress**: Displays percentage, bytes transferred, and total file size.
+  - **Elevated Permissions Handling**:
+    - For Linux `.deb` packages, uses `pkexec apt-get install -y` to trigger native Linux polkit administrator prompt, with fallback to system GUI software managers (e.g. Ubuntu Software, GDebi).
+    - For `.AppImage`, sets executable permissions (`chmod 0755`) and launches.
+    - For Windows/macOS, opens installer directly.
 - **Application Settings & Customization**:
   - Dedicated Settings Dialog (`Ctrl+,` shortcut, sidebar button, or TitleBar gear).
   - **Themes**: Switch between Light, Dark, or System mode.
