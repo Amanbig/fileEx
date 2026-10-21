@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import SettingsModal from "./settingsModal"
+import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 
 export interface SystemPlace {
@@ -49,6 +50,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
   const [pinned, setPinned] = useState<PinnedPlace[]>([])
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const { hasUpdate, latestVersion } = useAppSettings()
 
   // Load system places from Rust backend
   useEffect(() => {
@@ -324,23 +326,36 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                 <button
                   type="button"
                   onClick={() => setSettingsOpen(true)}
-                  className="w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="relative w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
                   <Settings className="h-4 w-4 shrink-0" />
+                  {hasUpdate && (
+                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                    </span>
+                  )}
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p className="font-medium">Settings (Ctrl+,)</p>
+                <p className="font-medium">{hasUpdate ? `Update Available: ${latestVersion}` : "Settings (Ctrl+,)"}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
-              <Settings className="h-4 w-4 shrink-0" />
-              <span>Settings</span>
+              <div className="flex items-center gap-2.5">
+                <Settings className="h-4 w-4 shrink-0" />
+                <span>Settings</span>
+              </div>
+              {hasUpdate && (
+                <span className="text-[10px] font-semibold bg-blue-500 text-white px-1.5 py-0.5 rounded-full">
+                  Update
+                </span>
+              )}
             </button>
           )}
         </div>

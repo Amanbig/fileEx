@@ -17,7 +17,6 @@ import {
 import { 
   ArrowUpDown, 
   ChevronDown, 
-  MoreHorizontal, 
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -35,7 +34,8 @@ import {
   ExternalLink,
   Info,
   FolderPlus,
-  FilePlus
+  FilePlus,
+  Terminal
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -44,9 +44,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -82,7 +79,7 @@ import PropertiesModal from "./propertiesModal"
 import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
 import FileGrid from "./fileGrid"
-import { truncateFilename } from "@/lib/utils"
+import { truncateFilename, cn } from "@/lib/utils"
 import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 import { 
@@ -386,6 +383,17 @@ export function FileStructure() {
     }
   }
 
+  // Open terminal at path
+  const handleOpenTerminal = async (targetPath?: string) => {
+    const p = targetPath || currentPath
+    try {
+      const res = await invoke<string>("open_terminal", { path: p })
+      toast.success(res)
+    } catch (err: any) {
+      toast.error(`Terminal error: ${err.message || err}`)
+    }
+  }
+
   // Handle double-click on folder or file
   const handleItemDoubleClick = async (item: FileItem) => {
     if (item.file_type === "folder") {
@@ -510,10 +518,10 @@ export function FileStructure() {
       },
       cell: ({ row }) => {
         const fileItem = row.original
-        const displayName = truncateFilename(fileItem.name, 34)
+        const displayName = truncateFilename(fileItem.name, 48)
         return (
           <div 
-            className={`flex items-center gap-2 min-w-0 max-w-[280px] sm:max-w-[380px] md:max-w-[480px] overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            className={`flex items-center gap-2 min-w-0 w-full overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
             onClick={(e) => {
               if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
                 e.stopPropagation()
@@ -557,7 +565,7 @@ export function FileStructure() {
           </span>
         )
       },
-      size: 130,
+      size: 160,
     },
     {
       accessorKey: "file_type",
@@ -573,98 +581,16 @@ export function FileStructure() {
           </span>
         )
       },
-      size: 90,
+      size: 100,
     },
     {
       accessorKey: "size",
-      header: () => <div className="text-right">Size</div>,
+      header: () => <div className="text-right pr-2">Size</div>,
       cell: ({ row }) => {
         const size = row.getValue("size") as number | null
-        return <div className="text-right text-xs text-muted-foreground">{formatFileSize(size)}</div>
+        return <div className="text-right pr-2 text-xs text-muted-foreground font-mono">{formatFileSize(size)}</div>
       },
       size: 90,
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      size: 44,
-      cell: ({ row }) => {
-        const fileItem = row.original
-
-        const handleOpen = async () => {
-          if (fileItem.file_type === "folder") {
-            navigateToPath(fileItem.path)
-          } else {
-            try {
-              const result = await invoke<string>("open_file_with_default_app", { filePath: fileItem.path })
-              toast.success(result)
-            } catch (error) {
-              toast.error(`Failed to open file: ${error}`)
-            }
-          }
-        }
-
-        const handleRename = () => {
-          setRenameItem(fileItem)
-          setRenameOpen(true)
-        }
-
-        const handleDelete = () => {
-          setDeleteItem(fileItem)
-          setDeleteOpen(true)
-        }
-
-        const handleProperties = () => {
-          setPropertiesPath(fileItem.path)
-          setPropertiesOpen(true)
-        }
-
-        const handleCopyPath = () => {
-          navigator.clipboard.writeText(fileItem.path)
-            .then(() => toast.success("Path copied to clipboard"))
-            .catch(() => toast.error("Failed to copy path"))
-        }
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-7 w-7 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={handleOpen}>
-                {fileItem.file_type === "folder" ? "Open Folder" : "Open File"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleCopyPath}>
-                Copy Path
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(fileItem.name)}
-              >
-                Copy Name
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleRename}>
-                Rename
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleProperties}>
-                Properties
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive focus:text-destructive"
-                onClick={handleDelete}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
     },
   ]
 
@@ -1081,8 +1007,13 @@ export function FileStructure() {
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                               {headerGroup.headers.map((header) => {
+                                const isName = header.id === "name";
                                 return (
-                                  <TableHead key={header.id} style={{ width: header.getSize() }}>
+                                  <TableHead 
+                                    key={header.id} 
+                                    className={isName ? "w-full" : undefined}
+                                    style={isName ? undefined : { width: header.getSize(), minWidth: header.getSize(), maxWidth: header.getSize() }}
+                                  >
                                     {header.isPlaceholder
                                       ? null
                                       : flexRender(
@@ -1106,14 +1037,21 @@ export function FileStructure() {
                                     onClick={(e) => handleRowClick(row.original, row, e)}
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                                   >
-                                    {row.getVisibleCells().map((cell) => (
-                                      <TableCell key={cell.id} style={{ width: cell.column.getSize() }} className="overflow-hidden truncate">
-                                        {flexRender(
-                                          cell.column.columnDef.cell,
-                                          cell.getContext()
-                                        )}
-                                      </TableCell>
-                                    ))}
+                                    {row.getVisibleCells().map((cell) => {
+                                      const isName = cell.column.id === "name";
+                                      return (
+                                        <TableCell 
+                                          key={cell.id} 
+                                          className={cn("overflow-hidden truncate", isName ? "w-full" : "")}
+                                          style={isName ? undefined : { width: cell.column.getSize(), minWidth: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                                        >
+                                          {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                          )}
+                                        </TableCell>
+                                      )
+                                    })}
                                   </TableRow>
                                 </ContextMenuTrigger>
                                 <ContextMenuContent className="w-48">
@@ -1122,6 +1060,12 @@ export function FileStructure() {
                                     {row.original.file_type === "folder" ? "Open Folder" : "Open"}
                                     <ContextMenuShortcut>↵</ContextMenuShortcut>
                                   </ContextMenuItem>
+                                  {row.original.file_type === "folder" && (
+                                    <ContextMenuItem onClick={() => handleOpenTerminal(row.original.path)}>
+                                      <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />
+                                      Open in Terminal
+                                    </ContextMenuItem>
+                                  )}
                                   <ContextMenuSeparator />
                                   <ContextMenuItem onClick={() => handleCopyItems([row.original.path])}>
                                     <Copy className="h-3.5 w-3.5 mr-2" />
@@ -1138,6 +1082,12 @@ export function FileStructure() {
                                     toast.success("Path copied to clipboard")
                                   }}>
                                     Copy Path
+                                  </ContextMenuItem>
+                                  <ContextMenuItem onClick={() => {
+                                    navigator.clipboard.writeText(row.original.name)
+                                    toast.success("Name copied to clipboard")
+                                  }}>
+                                    Copy Name
                                   </ContextMenuItem>
                                   <ContextMenuSeparator />
                                   <ContextMenuItem onClick={() => {
@@ -1252,6 +1202,10 @@ export function FileStructure() {
               <ContextMenuItem onClick={handleRefresh}>
                 <RefreshCw className="h-3.5 w-3.5 mr-2" />
                 Refresh
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleOpenTerminal(currentPath)}>
+                <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />
+                Open Terminal Here
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem onClick={() => table.toggleAllPageRowsSelected(true)}>

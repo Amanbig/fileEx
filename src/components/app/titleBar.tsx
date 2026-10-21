@@ -10,11 +10,13 @@ import { Settings } from "lucide-react";
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import ThemeToggle from "./themeToggle";
 import SettingsModal from "./settingsModal";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [appVersion, setAppVersion] = useState("0.5.4");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { hasUpdate, latestVersion } = useAppSettings();
   const appWindow = getCurrentWindow();
 
   useEffect(() => {
@@ -100,11 +102,17 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="relative h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
           onClick={() => setSettingsOpen(true)}
-          title="Settings (Ctrl+,)"
+          title={hasUpdate ? `Update Available: ${latestVersion} (Ctrl+,)` : "Settings (Ctrl+,)"}
         >
           <Settings className="h-3.5 w-3.5" />
+          {hasUpdate && (
+            <span className="absolute top-1 right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+            </span>
+          )}
         </Button>
         <ThemeToggle />
         <Button
