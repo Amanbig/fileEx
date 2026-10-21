@@ -33,8 +33,15 @@ This document contains the latest release notes and history for FileEx releases.
   - Large file-type icons with color coding, item name, and size.
   - Unified multi-selection across Table and Grid views.
 - **Native Context Menus**:
-  - Right-click on any file/folder (in Table or Grid) for instant actions (Open, Copy, Cut, Copy Path, Rename, Properties, Delete).
-  - Right-click on empty canvas to create new folder/file, paste items, or refresh.
+  - Right-click on any file/folder (in Table or Grid) for instant actions (Open, Open in Terminal, Copy, Cut, Copy Path, Copy Name, Rename, Properties, Delete).
+  - Right-click on empty canvas to create new folder/file, paste items, refresh, or **Open Terminal Here**.
+- **Integrated Terminal Launcher**:
+  - Cross-platform terminal emulator launcher (`open_terminal` command).
+  - Automatically identifies available terminal:
+    - **Linux**: Respects `$TERMINAL`, falls back to `x-terminal-emulator`, `gnome-terminal`, `ptyxis`, `konsole`, `xfce4-terminal`, `kitty`, `alacritty`, `foot`, `tilix`.
+    - **Windows**: Launches Windows Terminal (`wt -d`), PowerShell, or `cmd.exe`.
+    - **macOS**: Launches native `Terminal.app` (`open -a Terminal`).
+  - Available via canvas right-click, folder right-click, and top toolbar button.
 - **Global Keyboard Shortcuts**:
   - `Ctrl+C` (Copy), `Ctrl+X` (Cut), `Ctrl+V` (Paste), `Ctrl+A` (Select All), `Ctrl+,` (Settings).
   - `Delete` (Delete item), `F2` (Rename item), `Enter` (Open item).

@@ -34,7 +34,8 @@ import {
   ExternalLink,
   Info,
   FolderPlus,
-  FilePlus
+  FilePlus,
+  Terminal
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -379,6 +380,17 @@ export function FileStructure() {
       setTimeout(() => setCopiedPath(false), 2000)
     } catch {
       toast.error("Failed to copy path")
+    }
+  }
+
+  // Open terminal at path
+  const handleOpenTerminal = async (targetPath?: string) => {
+    const p = targetPath || currentPath
+    try {
+      const res = await invoke<string>("open_terminal", { path: p })
+      toast.success(res)
+    } catch (err: any) {
+      toast.error(`Terminal error: ${err.message || err}`)
     }
   }
 
@@ -1048,6 +1060,12 @@ export function FileStructure() {
                                     {row.original.file_type === "folder" ? "Open Folder" : "Open"}
                                     <ContextMenuShortcut>↵</ContextMenuShortcut>
                                   </ContextMenuItem>
+                                  {row.original.file_type === "folder" && (
+                                    <ContextMenuItem onClick={() => handleOpenTerminal(row.original.path)}>
+                                      <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />
+                                      Open in Terminal
+                                    </ContextMenuItem>
+                                  )}
                                   <ContextMenuSeparator />
                                   <ContextMenuItem onClick={() => handleCopyItems([row.original.path])}>
                                     <Copy className="h-3.5 w-3.5 mr-2" />
@@ -1184,6 +1202,10 @@ export function FileStructure() {
               <ContextMenuItem onClick={handleRefresh}>
                 <RefreshCw className="h-3.5 w-3.5 mr-2" />
                 Refresh
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleOpenTerminal(currentPath)}>
+                <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />
+                Open Terminal Here
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem onClick={() => table.toggleAllPageRowsSelected(true)}>

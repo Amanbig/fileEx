@@ -512,6 +512,111 @@ async fn open_file_with_default_app(file_path: String) -> Result<String, String>
     }
 }
 
+#[tauri::command]
+async fn open_terminal(path: String) -> Result<String, String> {
+    let target = Path::new(&path);
+    let dir = if target.is_dir() {
+        target
+    } else {
+        target.parent().unwrap_or(Path::new("."))
+    };
+
+    #[cfg(target_os = "linux")]
+    {
+        // Try user's $TERMINAL env variable first
+        if let Ok(term) = std::env::var("TERMINAL") {
+            if let Ok(_) = std::process::Command::new(&term)
+                .current_dir(dir)
+                .spawn()
+            {
+                return Ok(format!("Opened terminal ({})", term));
+            }
+        }
+
+        // List of popular Linux terminal emulators in priority order
+        let terminals = [
+            ("x-terminal-emulator", vec!["--working-directory"]),
+            ("gnome-terminal", vec!["--working-directory"]),
+            ("ptyxis", vec!["--working-directory"]),
+            ("konsole", vec!["--workdir"]),
+            ("xfce4-terminal", vec!["--working-directory"]),
+            ("kitty", vec!["--directory"]),
+            ("alacritty", vec!["--working-directory"]),
+            ("foot", vec!["-D"]),
+            ("tilix", vec!["--working-directory"]),
+            ("xterm", vec![]),
+        ];
+
+        for (term, args) in terminals {
+            if let Ok(output) = std::process::Command::new("which").arg(term).output() {
+                if output.status.success() {
+                    let mut cmd = std::process::Command::new(term);
+                    cmd.current_dir(dir);
+                    if !args.is_empty() {
+                        cmd.arg(args[0]).arg(dir);
+                    }
+                    if let Ok(_) = cmd.spawn() {
+                        return Ok(format!("Opened terminal ({})", term));
+                    }
+                }
+            }
+        }
+
+        Err("No supported terminal emulator found on this system".to_string())
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Try Windows Terminal (wt.exe) first
+        if let Ok(_) = std::process::Command::new("wt")
+            .arg("-d")
+            .arg(dir)
+            .current_dir(dir)
+            .spawn()
+        {
+            return Ok("Opened Windows Terminal".to_string());
+        }
+
+        // Fallback to PowerShell
+        if let Ok(_) = std::process::Command::new("powershell.exe")
+            .arg("-NoExit")
+            .current_dir(dir)
+            .spawn()
+        {
+            return Ok("Opened PowerShell".to_string());
+        }
+
+        // Fallback to Command Prompt
+        match std::process::Command::new("cmd.exe")
+            .arg("/K")
+            .current_dir(dir)
+            .spawn()
+        {
+            Ok(_) => Ok("Opened Command Prompt".to_string()),
+            Err(e) => Err(format!("Failed to open terminal on Windows: {}", e)),
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        // macOS `open -a Terminal <dir>` natively opens Terminal.app at target directory
+        match std::process::Command::new("open")
+            .arg("-a")
+            .arg("Terminal")
+            .arg(dir)
+            .spawn()
+        {
+            Ok(_) => Ok("Opened Terminal.app".to_string()),
+            Err(e) => Err(format!("Failed to open Terminal on macOS: {}", e)),
+        }
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
+    {
+        Err("Unsupported operating system for opening terminal".to_string())
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InstallInfo {
     pub os: String,            // "linux", "windows", "macos"
@@ -756,7 +861,8 @@ pub fn run() {
             open_file_with_default_app,
             get_install_info,
             download_update_file,
-            install_update_package
+            install_update_package,
+            open_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

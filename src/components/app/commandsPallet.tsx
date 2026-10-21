@@ -1,4 +1,4 @@
-import { ClipboardIcon, ScissorsIcon, Trash, Copy, FolderPlus, FilePlus, RefreshCw } from "lucide-react";
+import { ClipboardIcon, ScissorsIcon, Trash, Copy, FolderPlus, FilePlus, RefreshCw, Terminal } from "lucide-react";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
@@ -211,6 +211,15 @@ export default function CommandsPallet({
         }
     };
 
+    const handleOpenTerminal = async () => {
+        try {
+            const res = await invoke<string>("open_terminal", { path: currentPath });
+            toast.success(res);
+        } catch (err: any) {
+            toast.error(`Terminal error: ${err.message || err}`);
+        }
+    };
+
     return(
         <TooltipProvider>
             <div className="flex flex-row items-center gap-1 p-2 border-b bg-background">
@@ -403,6 +412,23 @@ export default function CommandsPallet({
                         </TooltipTrigger>
                         <TooltipContent>
                             <p>Refresh</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0"
+                                onClick={handleOpenTerminal}
+                                disabled={isLoading}
+                            >
+                                <Terminal className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Open in Terminal</p>
                         </TooltipContent>
                     </Tooltip>
 
