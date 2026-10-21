@@ -19,10 +19,9 @@ import {
   Palette, 
   FolderSync, 
   RotateCcw, 
-  Github, 
   Check,
   MousePointerClick,
-  DownloadCloud
+  Info
 } from "lucide-react"
 import { useAppSettings, FontSize } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
@@ -35,7 +34,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { settings, updateSettings, resetDefaults, theme, setTheme, hasUpdate } = useAppSettings()
-  const [activeTab, setActiveTab] = useState<"appearance" | "typography" | "explorer" | "updates" | "about">("appearance")
+  const [activeTab, setActiveTab] = useState<"appearance" | "typography" | "explorer" | "about">("appearance")
 
   const handleReset = () => {
     resetDefaults()
@@ -97,29 +96,18 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("updates")}
-            className={`relative flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
-              activeTab === "updates"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <DownloadCloud className="h-3.5 w-3.5" />
-            <span>Updates</span>
-            {hasUpdate && (
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-            )}
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveTab("about")}
-            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
+            className={`relative flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
               activeTab === "about"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            About
+            <Info className="h-3.5 w-3.5" />
+            <span>About</span>
+            {hasUpdate && (
+              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse ml-0.5" />
+            )}
           </button>
         </div>
 
@@ -376,57 +364,8 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
             </div>
           )}
 
-          {/* Updates Tab */}
-          {activeTab === "updates" && <SettingsUpdatesTab />}
-
-          {/* About Tab */}
-          {activeTab === "about" && (
-            <div className="space-y-4 py-1">
-              <div className="flex items-center gap-3.5 p-3.5 rounded-xl border bg-muted/20">
-                <img src="/app-icon.png" alt="FileEx Icon" className="w-12 h-12 rounded-lg object-contain shadow-sm" />
-                <div>
-                  <h4 className="font-semibold text-sm">FileEx</h4>
-                  <p className="text-[11px] text-muted-foreground">Modern Desktop File Explorer</p>
-                  <span className="inline-block mt-1 text-[10px] text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                    Version 0.5.4
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-muted-foreground text-xs leading-relaxed">
-                <p>
-                  A fast, lightweight cross-platform desktop file explorer built for everyday productivity and speed.
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-[11px]">Source Code & Releases</span>
-                <a
-                  href="https://github.com/Amanbig/fileEx"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                >
-                  <Github className="h-3.5 w-3.5" />
-                  GitHub Repository
-                </a>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-[11px]">License</span>
-                <a
-                  href="https://github.com/Amanbig/fileEx/blob/main/LICENSE"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
-                >
-                  MIT License
-                </a>
-              </div>
-            </div>
-          )}
+          {/* Merged About & Updates Tab */}
+          {activeTab === "about" && <SettingsUpdatesTab />}
         </div>
 
         <SheetFooter className="p-3 border-t bg-muted/20 flex flex-row items-center justify-between shrink-0">

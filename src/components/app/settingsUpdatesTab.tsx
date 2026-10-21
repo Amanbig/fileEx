@@ -11,7 +11,8 @@ import {
   Package, 
   Terminal, 
   HardDriveDownload,
-  Laptop
+  Laptop,
+  Github
 } from "lucide-react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
@@ -250,7 +251,27 @@ export default function SettingsUpdatesTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* App Brand Header */}
+      <div className="flex items-center gap-3.5 p-3.5 rounded-xl border bg-muted/20">
+        <img src="/app-icon.png" alt="FileEx Icon" className="w-12 h-12 rounded-lg object-contain shadow-xs" />
+        <div>
+          <h4 className="font-semibold text-sm">FileEx</h4>
+          <p className="text-[11px] text-muted-foreground">Modern Desktop File Explorer</p>
+          <span className="inline-block mt-1 text-[10px] text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+            Version v{installInfo?.current_version || "0.5.4"}
+          </span>
+        </div>
+      </div>
+
+      <div className="text-muted-foreground text-xs leading-relaxed">
+        <p>
+          A fast, lightweight cross-platform desktop file explorer built for everyday productivity and speed.
+        </p>
+      </div>
+
+      <Separator />
+
       {/* Current System & Version Summary */}
       <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
         <div className="flex items-center justify-between">
@@ -414,14 +435,27 @@ export default function SettingsUpdatesTab() {
       {/* Links & Safety */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">GitHub Releases</span>
+          <span className="text-muted-foreground">Source Code</span>
+          <a
+            href="https://github.com/Amanbig/fileEx"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-primary hover:underline font-medium text-xs"
+          >
+            <Github className="h-3.5 w-3.5" />
+            <span>GitHub Repository</span>
+          </a>
+        </div>
+
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Release Notes & Changelog</span>
           <a
             href={release?.html_url || "https://github.com/Amanbig/fileEx/releases"}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1 text-primary hover:underline font-medium text-xs"
           >
-            <span>View Changelog on GitHub</span>
+            <span>View Releases on GitHub</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
