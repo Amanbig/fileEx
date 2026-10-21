@@ -4,7 +4,7 @@ This document contains the latest release notes and history for FileEx releases.
 
 ---
 
-## 🚀 Latest Release: v1.0.0 (October 2026)
+## 🚀 Latest Release: v0.5.4 (October 2026)
 
 ### ✨ Major Features
 - **Places & Quick Access Sidebar**:
@@ -30,5 +30,5 @@ This document contains the latest release notes and history for FileEx releases.
 
 ## 📜 Release History
 
-- [v1.0.0 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v1.0.0.md) - Quick Access Sidebar, Breadcrumb Path Bar, TitleBar, Status Bar, and Linux GPU fixes.
+- [v0.5.4 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v0.5.4.md) - Quick Access Sidebar, Breadcrumb Path Bar, Native Modals, TitleBar, Status Bar, and Linux GPU fixes.
 - [v0.1.0 (Initial Release)](file:///home/amanpreet/Documents/fileEx/releases/v0.1.0.md) - Core explorer functionality, file management, clipboard operations, and themes.

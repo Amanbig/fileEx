@@ -22,6 +22,100 @@ pub struct SystemPlace {
     icon: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ItemProperties {
+    name: String,
+    path: String,
+    file_type: String, // "file" or "folder"
+    extension: Option<String>,
+    size: u64,
+    date_modified: DateTime<Utc>,
+    date_created: Option<DateTime<Utc>>,
+    is_readonly: bool,
+    items_count: Option<usize>,
+    permissions: String,
+}
+
+#[cfg(unix)]
+fn format_permissions(permissions: &fs::Permissions) -> String {
+    use std::os::unix::fs::PermissionsExt;
+    let mode = permissions.mode();
+    let user = format!("{}{}{}",
+        if mode & 0o400 != 0 { "r" } else { "-" },
+        if mode & 0o200 != 0 { "w" } else { "-" },
+        if mode & 0o100 != 0 { "x" } else { "-" }
+    );
+    let group = format!("{}{}{}",
+        if mode & 0o040 != 0 { "r" } else { "-" },
+        if mode & 0o020 != 0 { "w" } else { "-" },
+        if mode & 0o010 != 0 { "x" } else { "-" }
+    );
+    let others = format!("{}{}{}",
+        if mode & 0o004 != 0 { "r" } else { "-" },
+        if mode & 0o002 != 0 { "w" } else { "-" },
+        if mode & 0o001 != 0 { "x" } else { "-" }
+    );
+    format!("{}{}{}", user, group, others)
+}
+
+#[cfg(not(unix))]
+fn format_permissions(permissions: &fs::Permissions) -> String {
+    if permissions.readonly() {
+        "Read-only".to_string()
+    } else {
+        "Read-write".to_string()
+    }
+}
+
+#[tauri::command]
+async fn get_item_properties(path: String) -> Result<ItemProperties, String> {
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Err("Item does not exist".to_string());
+    }
+
+    let metadata = fs::metadata(p).map_err(|e| format!("Failed to read metadata: {}", e))?;
+    let is_dir = metadata.is_dir();
+    let name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let extension = if is_dir {
+        None
+    } else {
+        p.extension().map(|e| e.to_string_lossy().to_string())
+    };
+
+    let size = if is_dir {
+        0
+    } else {
+        metadata.len()
+    };
+
+    let items_count = if is_dir {
+        fs::read_dir(p).map(|entries| entries.count()).ok()
+    } else {
+        None
+    };
+
+    let date_modified = DateTime::<Utc>::from(
+        metadata.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH)
+    );
+    let date_created = metadata.created().ok().map(DateTime::<Utc>::from);
+    let is_readonly = metadata.permissions().readonly();
+    let permissions = format_permissions(&metadata.permissions());
+
+    Ok(ItemProperties {
+        name,
+        path: p.to_string_lossy().to_string(),
+        file_type: if is_dir { "folder".to_string() } else { "file".to_string() },
+        extension,
+        size,
+        date_modified,
+        date_created,
+        is_readonly,
+        items_count,
+        permissions,
+    })
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -425,6 +519,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             get_system_places,
+            get_item_properties,
             get_current_directory,
             list_directory,
             navigate_to_path,
