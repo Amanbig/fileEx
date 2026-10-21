@@ -7,6 +7,21 @@ This document contains the latest release notes and history for FileEx releases.
 ## 🚀 Latest Release: v0.5.4 (October 2026)
 
 ### ✨ Major Features
+- **Grid & Card View Mode**:
+  - Seamless toggle between Table (Details) view and Grid (Cards) view with saved user preference.
+  - Large file-type icons with color coding, item name, and size.
+  - Unified multi-selection across Table and Grid views.
+- **Native Context Menus**:
+  - Right-click on any file/folder (in Table or Grid) for instant actions (Open, Copy, Cut, Copy Path, Rename, Properties, Delete).
+  - Right-click on empty canvas to create new folder/file, paste items, or refresh.
+- **Global Keyboard Shortcuts**:
+  - `Ctrl+C` (Copy), `Ctrl+X` (Cut), `Ctrl+V` (Paste), `Ctrl+A` (Select All).
+  - `Delete` (Delete item), `F2` (Rename item), `Enter` (Open item).
+  - `Alt+Left` (Back), `Alt+Right` (Forward), `Alt+Up` (Up directory).
+- **Native Dialogs & File Properties**:
+  - Smart rename modal with filename stem auto-selection.
+  - Destructive confirmation dialog for deletions.
+  - Detailed File/Folder Properties inspector modal with Unix permissions, size, and item counts.
 - **Places & Quick Access Sidebar**:
   - Instant navigation to Home, Documents, Downloads, Desktop, Pictures, Videos, Music, and Root.
   - Custom folder pinning/unpinning (Favorites).

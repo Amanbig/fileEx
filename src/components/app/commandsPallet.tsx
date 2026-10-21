@@ -28,6 +28,43 @@ interface CommandsPalletProps {
 let clipboardItems: string[] = [];
 let clipboardOperation: 'copy' | 'cut' | null = null;
 
+export function getClipboardState() {
+  return { items: clipboardItems, operation: clipboardOperation };
+}
+
+export function setClipboardState(items: string[], op: 'copy' | 'cut') {
+  clipboardItems = [...items];
+  clipboardOperation = op;
+}
+
+export async function executePaste(destinationPath: string, onDone: () => void) {
+  if (clipboardItems.length === 0 || !clipboardOperation) {
+    toast.error("Nothing to paste");
+    return;
+  }
+
+  try {
+    if (clipboardOperation === 'copy') {
+      await invoke("copy_items", { 
+        source_paths: clipboardItems, 
+        destination_path: destinationPath 
+      });
+      toast.success(`Pasted ${clipboardItems.length} item(s)`);
+    } else if (clipboardOperation === 'cut') {
+      await invoke("move_items", { 
+        source_paths: clipboardItems, 
+        destination_path: destinationPath 
+      });
+      toast.success(`Moved ${clipboardItems.length} item(s)`);
+      clipboardItems = [];
+      clipboardOperation = null;
+    }
+    onDone();
+  } catch (error) {
+    toast.error(`Failed to paste: ${error}`);
+  }
+}
+
 export default function CommandsPallet({ 
   currentPath, 
   selectedItems, 
