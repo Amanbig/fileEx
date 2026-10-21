@@ -42,7 +42,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[460px] p-0 flex flex-col gap-0 h-full border-l shadow-2xl bg-background/95 backdrop-blur-sm">
+      <SheetContent side="right" className="w-full sm:max-w-[460px] p-0 flex flex-col gap-0 h-full border-l shadow-2xl bg-background">
         <SheetHeader className="p-4 border-b shrink-0 pr-12">
           <div className="flex items-center gap-2.5">
             <img src="/app-icon.png" alt="FileEx Logo" className="w-6 h-6 rounded object-contain shadow-xs" />
@@ -375,7 +375,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
 
               <div className="space-y-2 text-muted-foreground text-xs leading-relaxed">
                 <p>
-                  Engineered with Tauri v2, React 19, TypeScript, and Tailwind CSS. Built for performance, security, and fluid desktop interactions.
+                  A fast, lightweight cross-platform desktop file explorer built for everyday productivity and speed.
                 </p>
               </div>
 
