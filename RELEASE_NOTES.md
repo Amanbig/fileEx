@@ -9,6 +9,8 @@ This document contains the latest release notes and history for FileEx releases.
 ### ✨ Major Features
 - **In-App Updater & Release Manager**:
   - Dedicated **Updates** tab in Settings drawer.
+  - **Optimized Background Update Check**: Runs silently in the background (delayed by 4s on startup, throttled to once every 6 hours via local storage caching) without slowing down app startup or spamming the GitHub API.
+  - **Live Indicator Badges**: Shows an animated indicator dot on the Settings gear button (TitleBar and Sidebar footer) whenever a newer release is published.
   - Automatically queries GitHub Releases API (`api.github.com/repos/Amanbig/fileEx/releases/latest`) and compares semantic versions.
   - **Smart Package Matching**: Automatically detects user's OS and installation method:
     - **Linux**: Matches `.deb` (Debian/Ubuntu), `.AppImage`, or `.rpm` according to architecture (`x86_64` / `aarch64`).

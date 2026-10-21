@@ -78,7 +78,7 @@ import PropertiesModal from "./propertiesModal"
 import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
 import FileGrid from "./fileGrid"
-import { truncateFilename } from "@/lib/utils"
+import { truncateFilename, cn } from "@/lib/utils"
 import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 import { 
@@ -506,10 +506,10 @@ export function FileStructure() {
       },
       cell: ({ row }) => {
         const fileItem = row.original
-        const displayName = truncateFilename(fileItem.name, 34)
+        const displayName = truncateFilename(fileItem.name, 48)
         return (
           <div 
-            className={`flex items-center gap-2 min-w-0 max-w-[280px] sm:max-w-[380px] md:max-w-[480px] overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            className={`flex items-center gap-2 min-w-0 w-full overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
             onClick={(e) => {
               if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
                 e.stopPropagation()
@@ -553,7 +553,7 @@ export function FileStructure() {
           </span>
         )
       },
-      size: 130,
+      size: 160,
     },
     {
       accessorKey: "file_type",
@@ -569,14 +569,14 @@ export function FileStructure() {
           </span>
         )
       },
-      size: 90,
+      size: 100,
     },
     {
       accessorKey: "size",
-      header: () => <div className="text-right">Size</div>,
+      header: () => <div className="text-right pr-2">Size</div>,
       cell: ({ row }) => {
         const size = row.getValue("size") as number | null
-        return <div className="text-right text-xs text-muted-foreground">{formatFileSize(size)}</div>
+        return <div className="text-right pr-2 text-xs text-muted-foreground font-mono">{formatFileSize(size)}</div>
       },
       size: 90,
     },
@@ -995,8 +995,13 @@ export function FileStructure() {
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                               {headerGroup.headers.map((header) => {
+                                const isName = header.id === "name";
                                 return (
-                                  <TableHead key={header.id} style={{ width: header.getSize() }}>
+                                  <TableHead 
+                                    key={header.id} 
+                                    className={isName ? "w-full" : undefined}
+                                    style={isName ? undefined : { width: header.getSize(), minWidth: header.getSize(), maxWidth: header.getSize() }}
+                                  >
                                     {header.isPlaceholder
                                       ? null
                                       : flexRender(
@@ -1020,14 +1025,21 @@ export function FileStructure() {
                                     onClick={(e) => handleRowClick(row.original, row, e)}
                                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                                   >
-                                    {row.getVisibleCells().map((cell) => (
-                                      <TableCell key={cell.id} style={{ width: cell.column.getSize() }} className="overflow-hidden truncate">
-                                        {flexRender(
-                                          cell.column.columnDef.cell,
-                                          cell.getContext()
-                                        )}
-                                      </TableCell>
-                                    ))}
+                                    {row.getVisibleCells().map((cell) => {
+                                      const isName = cell.column.id === "name";
+                                      return (
+                                        <TableCell 
+                                          key={cell.id} 
+                                          className={cn("overflow-hidden truncate", isName ? "w-full" : "")}
+                                          style={isName ? undefined : { width: cell.column.getSize(), minWidth: cell.column.getSize(), maxWidth: cell.column.getSize() }}
+                                        >
+                                          {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                          )}
+                                        </TableCell>
+                                      )
+                                    })}
                                   </TableRow>
                                 </ContextMenuTrigger>
                                 <ContextMenuContent className="w-48">

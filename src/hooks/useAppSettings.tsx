@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react"
 import { useTheme } from "@/components/themeProvider"
+import { useAppUpdateCheck } from "./useAppUpdateCheck"
 
 export type FontSize = "small" | "medium" | "large"
 export type FontFamily = "sans" | "mono" | "serif"
@@ -21,6 +22,9 @@ interface AppSettingsContextType {
   resetDefaults: () => void
   theme: string
   setTheme: (theme: "light" | "dark" | "system") => void
+  hasUpdate: boolean
+  latestVersion: string | null
+  checkForUpdate: () => Promise<void>
 }
 
 const SETTINGS_KEY = "fileex_app_settings"
@@ -49,6 +53,7 @@ const AppSettingsContext = createContext<AppSettingsContextType | undefined>(und
 
 export function AppSettingsProvider({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme()
+  const { hasUpdate, latestVersion, checkForUpdate } = useAppUpdateCheck()
   const [settings, setSettings] = useState<AppSettings>(() => {
     try {
       const stored = localStorage.getItem(SETTINGS_KEY)
@@ -98,6 +103,9 @@ export function AppSettingsProvider({ children }: { children: React.ReactNode })
         resetDefaults,
         theme,
         setTheme,
+        hasUpdate,
+        latestVersion,
+        checkForUpdate,
       }}
     >
       {children}

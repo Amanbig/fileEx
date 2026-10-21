@@ -34,7 +34,7 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const { settings, updateSettings, resetDefaults, theme, setTheme } = useAppSettings()
+  const { settings, updateSettings, resetDefaults, theme, setTheme, hasUpdate } = useAppSettings()
   const [activeTab, setActiveTab] = useState<"appearance" | "typography" | "explorer" | "updates" | "about">("appearance")
 
   const handleReset = () => {
@@ -98,14 +98,17 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
           <button
             type="button"
             onClick={() => setActiveTab("updates")}
-            className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
+            className={`relative flex items-center gap-1.5 py-2.5 px-3 text-xs font-medium border-b-2 transition-colors ${
               activeTab === "updates"
                 ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             <DownloadCloud className="h-3.5 w-3.5" />
-            Updates
+            <span>Updates</span>
+            {hasUpdate && (
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+            )}
           </button>
           <button
             type="button"
