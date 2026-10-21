@@ -53,6 +53,9 @@ import {
 } from "@/components/ui/table"
 import CommandsPallet from "./commandsPallet"
 import PlacesSidebar from "./placesSidebar"
+import PropertiesModal from "./propertiesModal"
+import RenameModal from "./renameModal"
+import DeleteModal from "./deleteModal"
 import { toast } from "sonner"
 import { 
   FaFolder, FaFile, FaFileImage, FaFileAudio, FaFileVideo, FaFileArchive, FaFileCode, 
@@ -191,6 +194,14 @@ export function FileStructure() {
     size: 100,
     actions: 50,
   })
+
+  // Modal states for Native Dialogs & Properties
+  const [propertiesPath, setPropertiesPath] = React.useState<string | null>(null)
+  const [propertiesOpen, setPropertiesOpen] = React.useState(false)
+  const [renameItem, setRenameItem] = React.useState<FileItem | null>(null)
+  const [renameOpen, setRenameOpen] = React.useState(false)
+  const [deleteItem, setDeleteItem] = React.useState<FileItem | null>(null)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
 
   const pathInputRef = React.useRef<HTMLInputElement>(null)
 
@@ -472,31 +483,19 @@ export function FileStructure() {
           }
         }
 
-        const handleRename = async () => {
-          const newName = prompt("Enter new name:", fileItem.name)
-          if (!newName || newName.trim() === "" || newName === fileItem.name) return
-
-          try {
-            await invoke("rename_item", { 
-              oldPath: fileItem.path, 
-              newName: newName.trim() 
-            })
-            handleRefresh()
-          } catch (error) {
-            toast.error(`Failed to rename: ${error}`)
-          }
+        const handleRename = () => {
+          setRenameItem(fileItem)
+          setRenameOpen(true)
         }
 
-        const handleDelete = async () => {
-          const confirmDelete = confirm(`Are you sure you want to delete "${fileItem.name}"?`)
-          if (!confirmDelete) return
+        const handleDelete = () => {
+          setDeleteItem(fileItem)
+          setDeleteOpen(true)
+        }
 
-          try {
-            await invoke("delete_item", { path: fileItem.path })
-            handleRefresh()
-          } catch (error) {
-            toast.error(`Failed to delete: ${error}`)
-          }
+        const handleProperties = () => {
+          setPropertiesPath(fileItem.path)
+          setPropertiesOpen(true)
         }
 
         const handleCopyPath = () => {
@@ -531,6 +530,10 @@ export function FileStructure() {
               <DropdownMenuItem onClick={handleRename}>
                 Rename
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleProperties}>
+                Properties
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive focus:text-destructive"
                 onClick={handleDelete}
@@ -869,6 +872,30 @@ export function FileStructure() {
           )}
         </div>
       </footer>
+
+      {/* Properties Modal */}
+      <PropertiesModal
+        open={propertiesOpen}
+        onOpenChange={setPropertiesOpen}
+        itemPath={propertiesPath}
+        onNavigateToFolder={(path) => navigateToPath(path)}
+      />
+
+      {/* Rename Modal */}
+      <RenameModal
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        item={renameItem}
+        onRenamed={handleRefresh}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        item={deleteItem}
+        onDeleted={handleRefresh}
+      />
         </div>
       </div>
     </div>
