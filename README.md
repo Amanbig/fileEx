@@ -4,7 +4,7 @@
   <img src="images/dark.png" alt="FileEx Banner" width="85%" style="border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
   <br/><br/>
 
-  [![Version](https://img.shields.io/badge/Version-0.6.0-emerald?style=flat-square)](https://github.com/Amanbig/fileEx/releases)
+  [![Version](https://img.shields.io/badge/Version-0.6.1-emerald?style=flat-square)](https://github.com/Amanbig/fileEx/releases)
   [![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8D8?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app/)
   [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -227,7 +227,8 @@ fileEx/
 ├── releases/                      # Changelogs & detailed release notes
 │   ├── v0.1.0.md
 │   ├── v0.5.4.md
-│   └── v0.6.0.md
+│   ├── v0.6.0.md
+│   └── v0.6.1.md
 ├── CODE_OF_CONDUCT.md             # Contributor Covenant Code of Conduct
 ├── CONTRIBUTING.md                # Development & contribution guidelines
 ├── LICENSE                        # MIT License

@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core"
 const LAST_CHECK_KEY = "fileex-last-update-check-ts"
 const CACHED_UPDATE_KEY = "fileex-cached-update-info"
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000 // 6 hours
-const FALLBACK_VERSION = "0.6.0"
+const FALLBACK_VERSION = "0.6.1"
 
 export interface CachedUpdateInfo {
   hasUpdate: boolean

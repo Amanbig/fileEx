@@ -269,7 +269,7 @@ export default function SettingsUpdatesTab() {
           <h4 className="font-semibold text-sm">FileEx</h4>
           <p className="text-[11px] text-muted-foreground">Modern Desktop File Explorer</p>
           <span className="inline-block mt-1 text-[10px] text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-            Version v{installInfo?.current_version || "0.6.0"}
+            Version v{installInfo?.current_version || "0.6.1"}
           </span>
         </div>
       </div>
@@ -290,7 +290,7 @@ export default function SettingsUpdatesTab() {
             <div>
               <h4 className="font-semibold text-xs leading-none">Current Installation</h4>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Version <span className="font-mono font-medium text-foreground">v{installInfo?.current_version || "0.6.0"}</span>
+                Version <span className="font-mono font-medium text-foreground">v{installInfo?.current_version || "0.6.1"}</span>
               </p>
             </div>
           </div>

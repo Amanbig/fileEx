@@ -15,7 +15,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState("0.6.0");
+  const [appVersion, setAppVersion] = useState("0.6.1");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { hasUpdate, latestVersion } = useAppSettings();
   const appWindow = getCurrentWindow();
