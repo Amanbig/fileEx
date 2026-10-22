@@ -802,7 +802,7 @@ pub struct DownloadProgressPayload {
 fn get_install_info() -> Result<InstallInfo, String> {
     let os = std::env::consts::OS.to_string();
     let arch = std::env::consts::ARCH.to_string();
-    let current_version = "0.5.4".to_string();
+    let current_version = env!("CARGO_PKG_VERSION").to_string();
     let exe_path = std::env::current_exe()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
@@ -933,23 +933,41 @@ async fn install_update_package(file_path: String, install_type: String) -> Resu
     {
         if install_type == "deb" {
             // For .deb packages, elevated permissions are required.
-            // 1. If pkexec is available, launch "pkexec apt-get install -y <file_path>"
+            // Execute pkexec apt-get install -y <file_path> and await completion
             if Path::new("/usr/bin/pkexec").exists() {
-                let status = std::process::Command::new("pkexec")
-                    .arg("apt-get")
-                    .arg("install")
-                    .arg("-y")
-                    .arg(&file_path)
-                    .spawn();
+                let file_path_clone = file_path.clone();
+                let output = tokio::task::spawn_blocking(move || {
+                    std::process::Command::new("pkexec")
+                        .arg("apt-get")
+                        .arg("install")
+                        .arg("-y")
+                        .arg(&file_path_clone)
+                        .output()
+                })
+                .await
+                .map_err(|e| format!("Task execution error: {}", e))?;
 
-                if let Ok(_) = status {
-                    return Ok("Admin privilege prompt opened (pkexec). Follow system prompt to complete update.".to_string());
+                match output {
+                    Ok(out) => {
+                        if out.status.success() {
+                            return Ok("Update installed successfully! Restart FileEx to apply the new version.".to_string());
+                        } else {
+                            let stderr = String::from_utf8_lossy(&out.stderr);
+                            if stderr.contains("dismissed") || stderr.contains("cancelled") || out.status.code() == Some(126) || out.status.code() == Some(127) {
+                                return Err("Administrator authentication was cancelled.".to_string());
+                            }
+                            return Err(format!("Installation failed: {}", stderr.trim()));
+                        }
+                    }
+                    Err(e) => {
+                        return Err(format!("Failed to execute pkexec: {}", e));
+                    }
                 }
             }
 
-            // 2. Fall back to opening with system package manager (e.g. Software Center, GDebi)
+            // Fall back to opening with system package manager (e.g. Software Center, GDebi)
             match open::that(&file_path) {
-                Ok(_) => Ok("Opened in system package manager. Click 'Install' to apply update.".to_string()),
+                Ok(_) => Ok("Opened in system package manager. Click 'Install' to apply update, then restart FileEx.".to_string()),
                 Err(e) => Err(format!("Failed to open package: {}", e)),
             }
         } else if install_type == "appimage" {
@@ -1002,6 +1020,11 @@ async fn install_update_package(file_path: String, install_type: String) -> Resu
     }
 }
 
+#[tauri::command]
+fn restart_app(app_handle: tauri::AppHandle) {
+    app_handle.restart();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1024,7 +1047,8 @@ pub fn run() {
             get_install_info,
             download_update_file,
             install_update_package,
-            open_terminal
+            open_terminal,
+            restart_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
