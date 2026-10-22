@@ -46,14 +46,14 @@ export async function executePaste(destinationPath: string, onDone: () => void) 
   try {
     if (clipboardOperation === 'copy') {
       await invoke("copy_items", { 
-        source_paths: clipboardItems, 
-        destination_path: destinationPath 
+        sourcePaths: clipboardItems, 
+        destinationPath: destinationPath 
       });
       toast.success(`Pasted ${clipboardItems.length} item(s)`);
     } else if (clipboardOperation === 'cut') {
       await invoke("move_items", { 
-        source_paths: clipboardItems, 
-        destination_path: destinationPath 
+        sourcePaths: clipboardItems, 
+        destinationPath: destinationPath 
       });
       toast.success(`Moved ${clipboardItems.length} item(s)`);
       clipboardItems = [];
@@ -187,14 +187,14 @@ export default function CommandsPallet({
         try {
             if (clipboardOperation === 'copy') {
                 await invoke("copy_items", { 
-                    source_paths: clipboardItems, 
-                    destination_path: currentPath 
+                    sourcePaths: clipboardItems, 
+                    destinationPath: currentPath 
                 });
                 toast.success(`Pasted ${clipboardItems.length} item(s)`);
             } else if (clipboardOperation === 'cut') {
                 await invoke("move_items", { 
-                    source_paths: clipboardItems, 
-                    destination_path: currentPath 
+                    sourcePaths: clipboardItems, 
+                    destinationPath: currentPath 
                 });
                 toast.success(`Moved ${clipboardItems.length} item(s)`);
                 

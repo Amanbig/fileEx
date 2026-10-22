@@ -53,13 +53,40 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      - name: Prepare release notes
+        id: release_notes
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          CLEAN_TAG="${TAG#v}"
+          NOTES_FILE=""
+          if [ -f "releases/${TAG}.md" ]; then
+            NOTES_FILE="releases/${TAG}.md"
+          elif [ -f "releases/v${CLEAN_TAG}.md" ]; then
+            NOTES_FILE="releases/v${CLEAN_TAG}.md"
+          elif [ -f "RELEASE_NOTES.md" ]; then
+            NOTES_FILE="RELEASE_NOTES.md"
+          fi
+
+          if [ -n "$NOTES_FILE" ]; then
+            echo "Found release notes in $NOTES_FILE"
+            {
+              echo "body<<EOF_RELEASE_NOTES"
+              cat "$NOTES_FILE"
+              echo ""
+              echo "EOF_RELEASE_NOTES"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "body=See the assets to download this version and install." >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'FileEx ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: ${{ steps.release_notes.outputs.body }}
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
