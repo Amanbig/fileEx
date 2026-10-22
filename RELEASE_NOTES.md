@@ -4,38 +4,26 @@ This document contains the latest release notes and history for FileEx releases.
 
 ---
 
-## 🚀 Latest Release: v0.6.0 (October 2026)
+## 🚀 Latest Release: v0.6.1 (October 2026)
 
 ### ✨ Major Highlights & Enhancements
-- **Enterprise-Grade Error Handling & Resilience**:
-  - **Global Application Error Boundary**: Gracefully intercepts any unexpected runtime UI errors, presenting a user-friendly recovery interface with reload and session reset buttons instead of crashing into a blank screen.
-  - **Strict Filename Validation**: Backend validation preventing illegal characters (`/`, `\`, `\0`, and Windows `< > : " | ? *`), path traversals, or empty names.
-  - **Circular Copy & Move Guard**: Blocks attempts to copy or move a directory into itself or its descendants, eliminating infinite recursive loops.
-  - **Duplicate Copy Auto-Naming**: Automatically appends non-conflicting copy suffixes (e.g. `filename (copy).txt`) when pasting duplicate files into the same folder.
-  - **Cross-Filesystem Move Fallback**: Automatically falls back to recursive copy + source deletion when moving items across different partitions or external mounts (`EXDEV`).
-  - **Protected File Deletion**: Unsets read-only file attributes before deletion so locked files can be removed properly.
-  - **Descriptive OS Error Feedback**: Replaced raw I/O codes with human-readable explanations (e.g. `"Permission denied. Check write permissions."`).
-- **Ambient Window Drop Shadow & Surface Depth**:
-  - **Desktop Window Shadow**: Enabled native Tauri window drop-shadows (`"shadow": true`).
-  - **Dynamic Window Shell**: Restored/floating mode displays a crisp 1px framing border (`border border-border/80 dark:border-white/15`) with deep ambient drop-shadow (`shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.85)]`), while maximized mode automatically fits edge-to-edge without border clipping.
-  - **Distinct Color Hierarchy**: Deepened dark canvas background, softened light mode base, distinctly toned Places sidebar with rightward depth shadow, and recessed pill breadcrumbs address bar.
-  - **Card Hover Elevation**: Grid view cards elevated with physical card depth and hover lift (`shadow-xs hover:shadow-md hover:-translate-y-0.5`).
-- **High-Contrast Interactive Hover & Focus Feedback**:
-  - **TitleBar Controls**: Close button illuminates with vivid red (`hover:!bg-red-500 hover:!text-white dark:hover:!bg-red-600 dark:hover:!text-white`), and minimize, maximize, and settings buttons have high-contrast translucent overlays.
-  - **Global Button Variants**: Upgraded ghost and outline variants across toolbar actions, sidebar places, and table headers so keyboard focus and cursor hover are immediately distinguishable.
-- **Bug Fixes & Automation**:
-  - **Ctrl+V Parameter Fix**: Resolved `"not complete arguments passed"` error by matching Tauri 2 camelCase parameter expectations (`sourcePaths`, `destinationPath`).
-  - **Automated GitHub Release Notes**: Enhanced `.github/workflows/release.yml` with automated changelog extraction from `releases/v*.md` and `RELEASE_NOTES.md`.
-- **Open Source Community Standards**:
-  - Added GitHub Issue Templates (`bug_report.yml`, `feature_request.yml`, `config.yml`).
-  - Added Pull Request Template (`PULL_REQUEST_TEMPLATE.md`).
-  - Added Contributing Guide (`CONTRIBUTING.md`), Code of Conduct (`CODE_OF_CONDUCT.md`), and Security Policy (`SECURITY.md`).
+- **Dynamic Version Resolution & Accurate Status Reporting**:
+  - **Dynamic Crate Versioning**: Replaced hardcoded version constants in Tauri's `get_install_info` with compile-time crate version detection (`env!("CARGO_PKG_VERSION")`), eliminating the discrepancy where upgrading from `v0.5.4` still displayed `v0.5.4`.
+  - **Live UI Reflection**: TitleBar, Settings drawer, and update status hooks now dynamically reflect the exact running binary version (`v0.6.1`).
+  - **Immediate Cache Invalidation**: The background update check hook (`useAppUpdateCheck`) compares cached updates against the running version, immediately clearing update alerts when an update is applied.
+- **Synchronous Package Installation & Elevated Auth Flow**:
+  - **Awaited Polkit Execution**: Replaced unmonitored background spawning of `pkexec apt-get install -y <deb_path>` with synchronous execution (`tokio::task::spawn_blocking` + `.output()`).
+  - **Accurate Feedback**: The app remains in an explicit "Installing update..." state until authentication and package installation finish, providing clear feedback for success, cancellation, or system errors.
+- **One-Click In-App Restart Action**:
+  - **Native Tauri Restart**: Added backend `restart_app` command utilizing Tauri's `app_handle.restart()` API.
+  - **Restart Confirmation Banner**: Added an "Update Installed Successfully!" card with a prominent **"Restart FileEx Now"** button in Settings, allowing users to relaunch directly into the updated version.
 
 ---
 
 ## 📜 Release History
 
-- [v0.6.0 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v0.6.0.md) - Error boundary, robust file operations, window ambient shadow, distinct color hierarchy, hover states, and open-source standards.
+- [v0.6.1 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v0.6.1.md) - Dynamic version resolution, synchronous deb package installation, and one-click app restart action.
+- [v0.6.0](file:///home/amanpreet/Documents/fileEx/releases/v0.6.0.md) - Error boundary, robust file operations, window ambient shadow, distinct color hierarchy, hover states, and open-source standards.
 - [v0.5.4](file:///home/amanpreet/Documents/fileEx/releases/v0.5.4.md) - In-app release updater, background check badges, open terminal here, and table UI polish.
 - [v0.1.0 (Initial Release)](file:///home/amanpreet/Documents/fileEx/releases/v0.1.0.md) - Core explorer functionality, file management, clipboard operations, and themes.
 

@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react"
+import { invoke } from "@tauri-apps/api/core"
 
 const LAST_CHECK_KEY = "fileex-last-update-check-ts"
 const CACHED_UPDATE_KEY = "fileex-cached-update-info"
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000 // 6 hours
+const FALLBACK_VERSION = "0.6.1"
 
 export interface CachedUpdateInfo {
   hasUpdate: boolean
   latestVersion: string
   releaseName: string
   htmlUrl: string
+  checkedAgainstVersion?: string
 }
 
 function cleanSemver(tag: string): string {
@@ -27,23 +30,45 @@ function isVersionGreater(remote: string, local: string): boolean {
   return rPatch > lPatch
 }
 
-export function useAppUpdateCheck(currentVersion: string = "0.5.4") {
+export function useAppUpdateCheck(initialVersion?: string) {
+  const [currentVersion, setCurrentVersion] = useState<string>(initialVersion || FALLBACK_VERSION)
   const [hasUpdate, setHasUpdate] = useState(false)
   const [latestVersion, setLatestVersion] = useState<string | null>(null)
   const [releaseUrl, setReleaseUrl] = useState<string | null>(null)
   const [isChecking, setIsChecking] = useState(false)
 
+  // Fetch actual running version from Tauri backend dynamically
+  useEffect(() => {
+    invoke<{ current_version: string }>("get_install_info")
+      .then((info) => {
+        if (info?.current_version) {
+          setCurrentVersion(info.current_version)
+        }
+      })
+      .catch(() => {
+        // Fallback to tauri getVersion if get_install_info fails
+        import("@tauri-apps/api/app")
+          .then((app) => app.getVersion())
+          .then((v) => {
+            if (v) setCurrentVersion(v)
+          })
+          .catch(() => {})
+      })
+  }, [])
+
   const check = useCallback(async (force: boolean = false) => {
     const now = Date.now()
     const lastCheck = parseInt(localStorage.getItem(LAST_CHECK_KEY) || "0", 10)
 
-    // Check cache first if not forced and within interval
+    // Check cache first if not forced, within interval, and checked against the same app version
     if (!force && now - lastCheck < CHECK_INTERVAL_MS) {
       try {
         const cached = localStorage.getItem(CACHED_UPDATE_KEY)
         if (cached) {
           const parsed: CachedUpdateInfo = JSON.parse(cached)
-          setHasUpdate(parsed.hasUpdate)
+          // Re-evaluate against the current version
+          const isStillNewer = isVersionGreater(parsed.latestVersion, currentVersion)
+          setHasUpdate(isStillNewer)
           setLatestVersion(parsed.latestVersion)
           setReleaseUrl(parsed.htmlUrl)
           return
@@ -71,7 +96,8 @@ export function useAppUpdateCheck(currentVersion: string = "0.5.4") {
         hasUpdate: newer,
         latestVersion: data.tag_name,
         releaseName: data.name,
-        htmlUrl: data.html_url
+        htmlUrl: data.html_url,
+        checkedAgainstVersion: currentVersion
       }))
     } catch (err) {
       // Non-blocking fail silently for background check
@@ -81,26 +107,28 @@ export function useAppUpdateCheck(currentVersion: string = "0.5.4") {
   }, [currentVersion])
 
   useEffect(() => {
-    // Read cache immediately for instant UI
+    // Read cache immediately for instant UI, re-evaluating with currentVersion
     try {
       const cached = localStorage.getItem(CACHED_UPDATE_KEY)
       if (cached) {
         const parsed: CachedUpdateInfo = JSON.parse(cached)
-        setHasUpdate(parsed.hasUpdate)
+        const isStillNewer = isVersionGreater(parsed.latestVersion, currentVersion)
+        setHasUpdate(isStillNewer)
         setLatestVersion(parsed.latestVersion)
         setReleaseUrl(parsed.htmlUrl)
       }
     } catch (_) {}
 
-    // Run optimized background check delayed by 4 seconds after app launch
+    // Run background check delayed by 3 seconds after app launch
     const timer = setTimeout(() => {
       check(false)
-    }, 4000)
+    }, 3000)
 
     return () => clearTimeout(timer)
-  }, [check])
+  }, [check, currentVersion])
 
   return {
+    currentVersion,
     hasUpdate,
     latestVersion,
     releaseUrl,

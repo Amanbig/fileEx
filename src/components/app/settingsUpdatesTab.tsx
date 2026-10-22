@@ -86,6 +86,15 @@ export default function SettingsUpdatesTab() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgressPayload | null>(null)
   const [downloadedFilePath, setDownloadedFilePath] = useState<string | null>(null)
   const [isInstalling, setIsInstalling] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
+
+  const handleRestartApp = async () => {
+    try {
+      await invoke("restart_app")
+    } catch {
+      window.location.reload()
+    }
+  }
 
   // Fetch installation information on mount
   useEffect(() => {
@@ -186,7 +195,7 @@ export default function SettingsUpdatesTab() {
       const data: GithubRelease = await res.json()
       setRelease(data)
 
-      const currentVer = info ? info.current_version : "0.5.4"
+      const currentVer = info ? info.current_version : "0.6.0"
       const newer = isVersionGreater(data.tag_name, currentVer)
       setHasUpdate(newer)
 
@@ -242,6 +251,7 @@ export default function SettingsUpdatesTab() {
         installType: installInfo.install_type
       })
 
+      setIsInstalled(true)
       toast.success(result)
     } catch (err: any) {
       toast.error(`Installation error: ${err.message || err}`)
@@ -259,7 +269,7 @@ export default function SettingsUpdatesTab() {
           <h4 className="font-semibold text-sm">FileEx</h4>
           <p className="text-[11px] text-muted-foreground">Modern Desktop File Explorer</p>
           <span className="inline-block mt-1 text-[10px] text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-            Version v{installInfo?.current_version || "0.5.4"}
+            Version v{installInfo?.current_version || "0.6.1"}
           </span>
         </div>
       </div>
@@ -280,7 +290,7 @@ export default function SettingsUpdatesTab() {
             <div>
               <h4 className="font-semibold text-xs leading-none">Current Installation</h4>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Version <span className="font-mono font-medium text-foreground">v{installInfo?.current_version || "0.5.4"}</span>
+                Version <span className="font-mono font-medium text-foreground">v{installInfo?.current_version || "0.6.1"}</span>
               </p>
             </div>
           </div>
@@ -329,7 +339,7 @@ export default function SettingsUpdatesTab() {
               You are using the latest version of FileEx!
             </p>
             <p className="text-[11px] text-muted-foreground">
-              Current version v{installInfo?.current_version || "0.5.4"} is up to date with the latest GitHub release ({release.tag_name}).
+              Current version v{installInfo?.current_version || "0.6.0"} is up to date with the latest GitHub release ({release.tag_name}).
             </p>
           </div>
         </div>
@@ -406,6 +416,24 @@ export default function SettingsUpdatesTab() {
                     <HardDriveDownload className="h-3.5 w-3.5" />
                     {isDownloading ? "Downloading Update..." : `Download & Prepare (${formatBytes(matchedAsset.size)})`}
                   </Button>
+                ) : isInstalled ? (
+                  <div className="space-y-2.5 w-full p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                    <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Update Installed Successfully!</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-normal">
+                      The new version has been installed to your system. Restart FileEx to launch the updated version.
+                    </p>
+                    <Button
+                      size="sm"
+                      onClick={handleRestartApp}
+                      className="w-full text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Restart FileEx Now
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-2 w-full">
                     <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
@@ -417,10 +445,10 @@ export default function SettingsUpdatesTab() {
                       size="sm"
                       disabled={isInstalling}
                       onClick={handleInstall}
-                      className="w-full text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="w-full text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                     >
-                      <Terminal className="h-3.5 w-3.5" />
-                      {isInstalling ? "Applying Update..." : "Install Update Now"}
+                      <Terminal className={`h-3.5 w-3.5 ${isInstalling ? 'animate-spin' : ''}`} />
+                      {isInstalling ? "Installing update... please authenticate if prompted" : "Install Update Now"}
                     </Button>
                   </div>
                 )}

@@ -8,13 +8,14 @@ import {
 } from "react-icons/vsc";
 import { Settings } from "lucide-react";
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from "@tauri-apps/api/core";
 import ThemeToggle from "./themeToggle";
 import SettingsModal from "./settingsModal";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState("0.6.0");
+  const [appVersion, setAppVersion] = useState("0.6.1");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { hasUpdate, latestVersion } = useAppSettings();
   const appWindow = getCurrentWindow();
@@ -31,13 +32,19 @@ export default function TitleBar() {
   }, []);
 
   useEffect(() => {
-    // Fetch version dynamically from Tauri, with fallback to 0.5.4
-    import("@tauri-apps/api/app")
-      .then((app) => app.getVersion())
-      .then((ver) => {
-        if (ver) setAppVersion(ver);
+    // Fetch version dynamically from Tauri
+    invoke<{ current_version: string }>("get_install_info")
+      .then((info) => {
+        if (info?.current_version) setAppVersion(info.current_version);
       })
-      .catch(() => {});
+      .catch(() => {
+        import("@tauri-apps/api/app")
+          .then((app) => app.getVersion())
+          .then((ver) => {
+            if (ver) setAppVersion(ver);
+          })
+          .catch(() => {});
+      });
 
     let unlisten: (() => void) | undefined;
 
