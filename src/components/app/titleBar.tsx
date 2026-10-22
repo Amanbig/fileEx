@@ -102,7 +102,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="relative h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="relative h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={() => setSettingsOpen(true)}
           title={hasUpdate ? `Update Available: ${latestVersion} (Ctrl+,)` : "Settings (Ctrl+,)"}
         >
@@ -118,7 +118,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={() => appWindow.minimize()}
           title="Minimize"
         >
@@ -127,7 +127,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={handleToggleMaximize}
           title={isMaximized ? "Restore Down" : "Maximize"}
         >
@@ -140,7 +140,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-destructive hover:text-destructive-foreground text-muted-foreground transition-colors"
+          className="h-7 w-8 p-0 rounded-sm hover:!bg-red-500 hover:!text-white dark:hover:!bg-red-600 dark:hover:!text-white focus-visible:!bg-red-500 focus-visible:!text-white text-muted-foreground transition-colors"
           onClick={() => appWindow.close()}
           title="Close"
         >

@@ -206,7 +206,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
                         active
                           ? "bg-primary/15 text-primary font-semibold shadow-2xs"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                          : "text-sidebar-foreground/80 hover:bg-black/8 dark:hover:bg-white/12 hover:text-sidebar-foreground focus-visible:bg-black/8 dark:focus-visible:bg-white/12 outline-none"
                       } ${isCollapsed ? "justify-center px-0" : ""}`}
                     >
                       {getPlaceIcon(place.icon)}
@@ -248,7 +248,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                     <button
                       type="button"
                       onClick={handlePinCurrentFolder}
-                      className={`p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors ${
+                      className={`p-1 rounded text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-black/8 dark:hover:bg-white/12 focus-visible:bg-black/8 dark:focus-visible:bg-white/12 outline-none transition-colors ${
                         isCollapsed ? "mx-auto" : ""
                       }`}
                     >
@@ -277,7 +277,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                       className={`group relative w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer text-left ${
                         active
                           ? "bg-primary/15 text-primary font-semibold shadow-2xs"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                          : "text-sidebar-foreground/80 hover:bg-black/8 dark:hover:bg-white/12 hover:text-sidebar-foreground focus-visible:bg-black/8 dark:focus-visible:bg-white/12 outline-none"
                       } ${isCollapsed ? "justify-center px-0" : ""}`}
                     >
                       <Folder className="h-4 w-4 shrink-0 text-amber-500" />
@@ -326,7 +326,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                 <button
                   type="button"
                   onClick={() => setSettingsOpen(true)}
-                  className="relative w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+                  className="relative w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-black/8 dark:hover:bg-white/12 hover:text-sidebar-foreground focus-visible:bg-black/8 dark:focus-visible:bg-white/12 outline-none transition-colors"
                 >
                   <Settings className="h-4 w-4 shrink-0" />
                   {hasUpdate && (
@@ -345,7 +345,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+              className="relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-black/8 dark:hover:bg-white/12 hover:text-sidebar-foreground focus-visible:bg-black/8 dark:focus-visible:bg-white/12 outline-none transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <Settings className="h-4 w-4 shrink-0" />

@@ -891,7 +891,7 @@ export function FileStructure() {
                             e.stopPropagation()
                             navigateToPath(crumb.path)
                           }}
-                          className="px-1.5 py-0.5 text-xs rounded hover:bg-accent hover:text-accent-foreground font-medium truncate shrink-0 max-w-[140px]"
+                          className="px-1.5 py-0.5 text-xs rounded hover:bg-black/10 dark:hover:bg-white/15 hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none font-medium truncate shrink-0 max-w-[140px] transition-colors"
                           title={crumb.path}
                         >
                           {crumb.name}
@@ -908,7 +908,7 @@ export function FileStructure() {
                         setPathInput(currentPath)
                         setIsEditingPath(true)
                       }}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/15 focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none transition-colors"
                       title="Edit path directly"
                     >
                       <Edit2 className="h-3 w-3" />
@@ -919,7 +919,7 @@ export function FileStructure() {
                         e.stopPropagation()
                         handleCopyCurrentPath()
                       }}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/15 focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none transition-colors"
                       title="Copy path"
                     >
                       {copiedPath ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
@@ -1035,7 +1035,7 @@ export function FileStructure() {
                                     data-state={row.getIsSelected() && "selected"}
                                     onDoubleClick={() => handleItemDoubleClick(row.original)}
                                     onClick={(e) => handleRowClick(row.original, row, e)}
-                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
                                   >
                                     {row.getVisibleCells().map((cell) => {
                                       const isName = cell.column.id === "name";
