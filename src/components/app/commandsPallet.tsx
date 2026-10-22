@@ -79,8 +79,13 @@ export default function CommandsPallet({
     const [fileName, setFileName] = useState("");
 
     const handleCreateFolder = async () => {
-        if (!folderName.trim()) {
+        const trimmed = folderName.trim();
+        if (!trimmed) {
             toast.error("Please enter a folder name");
+            return;
+        }
+        if (trimmed.includes("/") || trimmed.includes("\\")) {
+            toast.error("Folder name cannot contain slashes (/ or \\)");
             return;
         }
 
@@ -88,22 +93,27 @@ export default function CommandsPallet({
         try {
             await invoke("create_folder", { 
                 path: currentPath, 
-                name: folderName.trim() 
+                name: trimmed 
             });
-            toast.success(`Folder "${folderName.trim()}" created successfully`);
+            toast.success(`Folder "${trimmed}" created successfully`);
             setFolderName("");
             setFolderDialogOpen(false);
             onRefresh();
-        } catch (error) {
-            toast.error(`Failed to create folder: ${error}`);
+        } catch (error: any) {
+            toast.error(`Failed to create folder: ${error?.message || error}`);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleCreateFile = async () => {
-        if (!fileName.trim()) {
+        const trimmed = fileName.trim();
+        if (!trimmed) {
             toast.error("Please enter a file name");
+            return;
+        }
+        if (trimmed.includes("/") || trimmed.includes("\\")) {
+            toast.error("File name cannot contain slashes (/ or \\)");
             return;
         }
 
@@ -111,14 +121,14 @@ export default function CommandsPallet({
         try {
             await invoke("create_file", { 
                 path: currentPath, 
-                name: fileName.trim() 
+                name: trimmed 
             });
-            toast.success(`File "${fileName.trim()}" created successfully`);
+            toast.success(`File "${trimmed}" created successfully`);
             setFileName("");
             setFileDialogOpen(false);
             onRefresh();
-        } catch (error) {
-            toast.error(`Failed to create file: ${error}`);
+        } catch (error: any) {
+            toast.error(`Failed to create file: ${error?.message || error}`);
         } finally {
             setIsLoading(false);
         }

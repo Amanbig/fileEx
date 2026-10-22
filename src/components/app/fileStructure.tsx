@@ -312,9 +312,11 @@ export function FileStructure() {
         setNavigationHistory(newHistory)
         setHistoryIndex(newHistory.length - 1)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to navigate to path:", error)
-      toast.error(`Failed to navigate to: ${path}`)
+      const errorMsg = typeof error === 'string' ? error : (error?.message || `Failed to navigate to: ${path}`)
+      toast.error(errorMsg)
+      setPathInput(currentPath)
     } finally {
       setLoading(false)
     }
@@ -427,14 +429,18 @@ export function FileStructure() {
       toast.error("Please enter a folder name")
       return
     }
+    if (trimmed.includes("/") || trimmed.includes("\\")) {
+      toast.error("Folder name cannot contain slashes (/ or \\)")
+      return
+    }
     try {
       await invoke("create_folder", { path: currentPath, name: trimmed })
       toast.success(`Created folder "${trimmed}"`)
       setNewFolderInput("")
       setNewFolderDialogOpen(false)
       handleRefresh()
-    } catch (err) {
-      toast.error(`Failed to create folder: ${err}`)
+    } catch (err: any) {
+      toast.error(`Failed to create folder: ${err?.message || err}`)
     }
   }
 
@@ -445,14 +451,18 @@ export function FileStructure() {
       toast.error("Please enter a file name")
       return
     }
+    if (trimmed.includes("/") || trimmed.includes("\\")) {
+      toast.error("File name cannot contain slashes (/ or \\)")
+      return
+    }
     try {
       await invoke("create_file", { path: currentPath, name: trimmed })
       toast.success(`Created file "${trimmed}"`)
       setNewFileInput("")
       setNewFileDialogOpen(false)
       handleRefresh()
-    } catch (err) {
-      toast.error(`Failed to create file: ${err}`)
+    } catch (err: any) {
+      toast.error(`Failed to create file: ${err?.message || err}`)
     }
   }
 

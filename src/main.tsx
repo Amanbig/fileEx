@@ -6,6 +6,7 @@ import { AppSettingsProvider } from "./hooks/useAppSettings";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import TitleBar from "./components/app/titleBar";
+import ErrorBoundary from "./components/errorBoundary";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const router = createBrowserRouter([
@@ -60,10 +61,12 @@ function WindowLayout() {
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <AppSettingsProvider>
-        <WindowLayout />
-      </AppSettingsProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <AppSettingsProvider>
+          <WindowLayout />
+        </AppSettingsProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 );
