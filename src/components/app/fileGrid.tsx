@@ -140,8 +140,8 @@ export default function FileGrid({
                 onDoubleClick={() => onItemDoubleClick(item)}
                 className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center ${
                   isSelected
-                    ? "bg-primary/10 border-primary ring-1 ring-primary shadow-xs"
-                    : "bg-card hover:bg-accent/40 hover:border-border/80 border-border/50"
+                    ? "bg-primary/15 border-primary ring-2 ring-primary/40 shadow-sm"
+                    : "bg-card hover:bg-card/90 border-border/70 dark:border-white/10 hover:border-border hover:shadow-md hover:-translate-y-0.5 shadow-xs transition-all duration-150"
                 }`}
               >
                 {/* Top Actions Overlay */}

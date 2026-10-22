@@ -4,7 +4,7 @@
   <img src="images/dark.png" alt="FileEx Banner" width="85%" style="border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12);" />
   <br/><br/>
 
-  [![Version](https://img.shields.io/badge/Version-0.5.4-emerald?style=flat-square)](https://github.com/Amanbig/fileEx/releases)
+  [![Version](https://img.shields.io/badge/Version-0.6.0-emerald?style=flat-square)](https://github.com/Amanbig/fileEx/releases)
   [![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8D8?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app/)
   [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -41,6 +41,20 @@
 
 ## ✨ Features at a Glance
 
+### 🛡️ Error Handling & Crash Resilience
+- **Global React Error Boundary**: Intercepts unhandled errors gracefully, rendering an informative recovery screen with **"Reload FileEx"** and **"Reset to Home"** options rather than crashing into a blank white screen.
+- **Strict Filename Validation**: Pre-validates file and folder names on both frontend and backend to block empty inputs, illegal slashes (`/`, `\`), null bytes (`\0`), and Windows-forbidden characters (`< > : " | ? *`).
+- **Circular Copy & Move Protection**: Prevents infinite recursion when a user attempts to copy or move a folder into itself or its own subdirectories.
+- **Duplicate Copy Auto-Naming**: Automatically creates non-conflicting names (e.g. `document (copy).pdf`, `photos (copy 2)`) when pasting duplicate files in the same folder.
+- **Cross-Filesystem Move Resilience**: Gracefully handles partition-crossing moves (`EXDEV: Cross-device link`) with an automated copy + source cleanup fallback.
+- **Human-Readable OS Error Reasons**: Formats raw I/O errors into actionable user notifications (e.g. `"Permission denied. Check write permissions."`).
+
+### 🎨 Ambient Window Shadow & Visual Polish
+- **Native Desktop Window Shadow**: Enabled via Tauri's `"shadow": true` window configuration.
+- **Dynamic Window Shell**: Restored/floating mode renders a crisp 1px border (`border border-border/80 dark:border-white/15`) and deep ambient shadow (`shadow-[0_12px_40px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.85)]`), while maximized mode automatically fits edge-to-edge.
+- **Distinct Surface Hierarchy**: Clean visual distinction between the main canvas, sidebar with rightward-casting shadow, elevated toolbars, and recessed pill breadcrumbs address bar.
+- **High-Contrast Hover & Focus States**: TitleBar close button highlights in vivid red (`hover:!bg-red-500 hover:!text-white dark:hover:!bg-red-600 dark:hover:!text-white`), and all window controls and toolbar buttons feature high-contrast overlays on hover and keyboard navigation.
+
 ### 🚀 In-App Updater & Smart Package Manager
 - **Live GitHub Releases Checking**: One-click check from the Settings drawer for the latest official release.
 - **Optimized Background Checking**: Runs silently on launch (throttled to once every 6 hours via local storage cache) without slowing down app startup or triggering API rate limits.
@@ -73,7 +87,7 @@
 
 ### 🗂️ Dual View Modes
 - **Details Table View**: High-density sortable table with responsive layout (`Name` takes all available width, with compact columns for `Date Modified`, `Type`, and `Size`).
-- **Cards Grid View**: Rich visual grid with large colored file-type icons, file names, and human-readable sizes.
+- **Cards Grid View**: Rich visual grid with large colored file-type icons, file names, and human-readable sizes with card hover elevation.
 - **Persistent View Preference**: Remembers your preferred view layout across app sessions.
 
 ### 📌 Places Sidebar & Pinned Favorites
@@ -170,7 +184,15 @@ sudo apt install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patc
 
 ```
 fileEx/
-├── src/                          # React 19 Frontend
+├── .github/                       # GitHub configurations
+│   ├── ISSUE_TEMPLATE/            # Interactive issue forms (Bug report, Feature request)
+│   │   ├── bug_report.yml
+│   │   ├── feature_request.yml
+│   │   └── config.yml
+│   ├── workflows/                 # CI/CD release automation
+│   │   └── release.yml
+│   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request template
+├── src/                           # React 19 Frontend
 │   ├── components/
 │   │   ├── app/
 │   │   │   ├── commandsPallet.tsx       # Breadcrumbs, history, view toggle & actions
@@ -185,6 +207,7 @@ fileEx/
 │   │   │   ├── themeToggle.tsx          # Quick theme switcher
 │   │   │   └── titleBar.tsx             # Frameless title bar with native window controls
 │   │   ├── ui/                          # shadcn/ui base primitives
+│   │   ├── errorBoundary.tsx            # Global application crash recovery boundary
 │   │   └── themeProvider.tsx            # Theme provider context
 │   ├── hooks/
 │   │   ├── useAppSettings.tsx           # App customization state & persistent settings
@@ -193,7 +216,7 @@ fileEx/
 │   │   └── utils.ts                     # Utility helpers (formatting, class merging)
 │   ├── App.css                          # Modern neutral-slate styling & design tokens
 │   ├── App.tsx                          # App root with Settings & Theme providers
-│   └── main.tsx                         # React entry point
+│   └── main.tsx                         # React entry point with ErrorBoundary & WindowShell
 ├── src-tauri/                     # Rust Desktop Backend
 │   ├── src/
 │   │   ├── lib.rs                       # Tauri commands (file I/O, updater, terminal launcher)
@@ -203,12 +226,15 @@ fileEx/
 │   └── icons/                           # Application branding icons
 ├── releases/                      # Changelogs & detailed release notes
 │   ├── v0.1.0.md
-│   └── v0.5.4.md
-├── .github/workflows/             # GitHub Actions CI/CD release automation
-│   └── release.yml
+│   ├── v0.5.4.md
+│   └── v0.6.0.md
+├── CODE_OF_CONDUCT.md             # Contributor Covenant Code of Conduct
+├── CONTRIBUTING.md                # Development & contribution guidelines
 ├── LICENSE                        # MIT License
 ├── package.json                   # Frontend dependencies & scripts
-└── README.md                      # Project documentation
+├── README.md                      # Project documentation
+├── RELEASE_NOTES.md               # Complete release changelog
+└── SECURITY.md                    # Security vulnerability policy
 ```
 
 ---
@@ -224,12 +250,12 @@ FileEx communicates between React and Rust via high-performance Tauri IPC comman
 | `get_system_places` | Detects standard directories (Desktop, Documents, Downloads, Music, Pictures, Videos, Root) |
 | `list_directory(path)` | Efficiently lists all files and directories with metadata (size, dates, type, permissions) |
 | `navigate_to_path(path)` | Validates and resolves directory paths |
-| `create_folder(path, name)` | Creates a new folder |
-| `create_file(path, name)` | Creates a new empty file |
-| `delete_item(path)` | Deletes a file or directory recursively |
-| `rename_item(old_path, new_name)`| Renames a file or folder |
-| `copy_items(sources, dest)` | Copies files and folders recursively |
-| `move_items(sources, dest)` | Moves files and folders |
+| `create_folder(path, name)` | Validates name and creates a new folder safely |
+| `create_file(path, name)` | Validates name and creates a new empty file |
+| `delete_item(path)` | Clears readonly permissions and deletes item recursively |
+| `rename_item(old_path, new_name)`| Validates name and renames a file or folder |
+| `copy_items(sources, dest)` | Prevents circular recursion, handles duplicate auto-naming, and copies recursively |
+| `move_items(sources, dest)` | Prevents circular moves, falls back to copy+remove on cross-device links (`EXDEV`) |
 | `open_file_with_default_app` | Launches a file in the system default application |
 | `open_terminal(path)` | Spawns an external terminal instance at the specified directory path |
 | `get_item_properties(path)` | Gathers comprehensive metadata (byte size, dates, counts, Unix mode) |
@@ -242,12 +268,19 @@ FileEx communicates between React and Rust via high-performance Tauri IPC comman
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!
+Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting pull requests.
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feat/amazing-feature`)
 3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+4. Push to the branch (`git push origin feat/amazing-feature`)
+5. Open a Pull Request using our [PR Template](.github/PULL_REQUEST_TEMPLATE.md)
+
+---
+
+## 🔒 Security
+
+For security vulnerabilities and disclosures, please refer to our [Security Policy](SECURITY.md).
 
 ---
 

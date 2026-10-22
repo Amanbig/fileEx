@@ -46,14 +46,14 @@ export async function executePaste(destinationPath: string, onDone: () => void) 
   try {
     if (clipboardOperation === 'copy') {
       await invoke("copy_items", { 
-        source_paths: clipboardItems, 
-        destination_path: destinationPath 
+        sourcePaths: clipboardItems, 
+        destinationPath: destinationPath 
       });
       toast.success(`Pasted ${clipboardItems.length} item(s)`);
     } else if (clipboardOperation === 'cut') {
       await invoke("move_items", { 
-        source_paths: clipboardItems, 
-        destination_path: destinationPath 
+        sourcePaths: clipboardItems, 
+        destinationPath: destinationPath 
       });
       toast.success(`Moved ${clipboardItems.length} item(s)`);
       clipboardItems = [];
@@ -79,8 +79,13 @@ export default function CommandsPallet({
     const [fileName, setFileName] = useState("");
 
     const handleCreateFolder = async () => {
-        if (!folderName.trim()) {
+        const trimmed = folderName.trim();
+        if (!trimmed) {
             toast.error("Please enter a folder name");
+            return;
+        }
+        if (trimmed.includes("/") || trimmed.includes("\\")) {
+            toast.error("Folder name cannot contain slashes (/ or \\)");
             return;
         }
 
@@ -88,22 +93,27 @@ export default function CommandsPallet({
         try {
             await invoke("create_folder", { 
                 path: currentPath, 
-                name: folderName.trim() 
+                name: trimmed 
             });
-            toast.success(`Folder "${folderName.trim()}" created successfully`);
+            toast.success(`Folder "${trimmed}" created successfully`);
             setFolderName("");
             setFolderDialogOpen(false);
             onRefresh();
-        } catch (error) {
-            toast.error(`Failed to create folder: ${error}`);
+        } catch (error: any) {
+            toast.error(`Failed to create folder: ${error?.message || error}`);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleCreateFile = async () => {
-        if (!fileName.trim()) {
+        const trimmed = fileName.trim();
+        if (!trimmed) {
             toast.error("Please enter a file name");
+            return;
+        }
+        if (trimmed.includes("/") || trimmed.includes("\\")) {
+            toast.error("File name cannot contain slashes (/ or \\)");
             return;
         }
 
@@ -111,14 +121,14 @@ export default function CommandsPallet({
         try {
             await invoke("create_file", { 
                 path: currentPath, 
-                name: fileName.trim() 
+                name: trimmed 
             });
-            toast.success(`File "${fileName.trim()}" created successfully`);
+            toast.success(`File "${trimmed}" created successfully`);
             setFileName("");
             setFileDialogOpen(false);
             onRefresh();
-        } catch (error) {
-            toast.error(`Failed to create file: ${error}`);
+        } catch (error: any) {
+            toast.error(`Failed to create file: ${error?.message || error}`);
         } finally {
             setIsLoading(false);
         }
@@ -187,14 +197,14 @@ export default function CommandsPallet({
         try {
             if (clipboardOperation === 'copy') {
                 await invoke("copy_items", { 
-                    source_paths: clipboardItems, 
-                    destination_path: currentPath 
+                    sourcePaths: clipboardItems, 
+                    destinationPath: currentPath 
                 });
                 toast.success(`Pasted ${clipboardItems.length} item(s)`);
             } else if (clipboardOperation === 'cut') {
                 await invoke("move_items", { 
-                    source_paths: clipboardItems, 
-                    destination_path: currentPath 
+                    sourcePaths: clipboardItems, 
+                    destinationPath: currentPath 
                 });
                 toast.success(`Moved ${clipboardItems.length} item(s)`);
                 
@@ -222,7 +232,7 @@ export default function CommandsPallet({
 
     return(
         <TooltipProvider>
-            <div className="flex flex-row items-center gap-1 p-2 border-b bg-background">
+            <div className="flex flex-row items-center gap-1 p-2 border-b border-border/70 bg-card/75 dark:bg-card/40 backdrop-blur-xs shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_6px_rgba(0,0,0,0.2)] z-20">
                 {/* File operations */}
                 <div className="flex items-center gap-1">
                     <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>

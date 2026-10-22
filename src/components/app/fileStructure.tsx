@@ -312,9 +312,11 @@ export function FileStructure() {
         setNavigationHistory(newHistory)
         setHistoryIndex(newHistory.length - 1)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to navigate to path:", error)
-      toast.error(`Failed to navigate to: ${path}`)
+      const errorMsg = typeof error === 'string' ? error : (error?.message || `Failed to navigate to: ${path}`)
+      toast.error(errorMsg)
+      setPathInput(currentPath)
     } finally {
       setLoading(false)
     }
@@ -427,14 +429,18 @@ export function FileStructure() {
       toast.error("Please enter a folder name")
       return
     }
+    if (trimmed.includes("/") || trimmed.includes("\\")) {
+      toast.error("Folder name cannot contain slashes (/ or \\)")
+      return
+    }
     try {
       await invoke("create_folder", { path: currentPath, name: trimmed })
       toast.success(`Created folder "${trimmed}"`)
       setNewFolderInput("")
       setNewFolderDialogOpen(false)
       handleRefresh()
-    } catch (err) {
-      toast.error(`Failed to create folder: ${err}`)
+    } catch (err: any) {
+      toast.error(`Failed to create folder: ${err?.message || err}`)
     }
   }
 
@@ -445,14 +451,18 @@ export function FileStructure() {
       toast.error("Please enter a file name")
       return
     }
+    if (trimmed.includes("/") || trimmed.includes("\\")) {
+      toast.error("File name cannot contain slashes (/ or \\)")
+      return
+    }
     try {
       await invoke("create_file", { path: currentPath, name: trimmed })
       toast.success(`Created file "${trimmed}"`)
       setNewFileInput("")
       setNewFileDialogOpen(false)
       handleRefresh()
-    } catch (err) {
-      toast.error(`Failed to create file: ${err}`)
+    } catch (err: any) {
+      toast.error(`Failed to create file: ${err?.message || err}`)
     }
   }
 
@@ -789,7 +799,7 @@ export function FileStructure() {
         {/* Main Explorer View */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Navigation and Breadcrumbs Bar */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20 flex-shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-muted/30 dark:bg-muted/15 flex-shrink-0 shadow-2xs">
             {/* Navigation History & Direction Buttons */}
             <div className="flex items-center gap-0.5">
               <Button 
@@ -849,7 +859,7 @@ export function FileStructure() {
             </div>
 
             {/* Breadcrumb Path Bar with Direct Edit Mode */}
-            <div className="flex-1 min-w-0 flex items-center bg-background border rounded-md px-2 h-8 shadow-xs focus-within:ring-1 focus-within:ring-ring">
+            <div className="flex-1 min-w-0 flex items-center bg-card/90 dark:bg-card/70 border border-border/70 rounded-md px-2 h-8 shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] focus-within:ring-1 focus-within:ring-ring">
               {isEditingPath ? (
                 <div className="flex items-center w-full gap-1">
                   <Input
@@ -891,7 +901,7 @@ export function FileStructure() {
                             e.stopPropagation()
                             navigateToPath(crumb.path)
                           }}
-                          className="px-1.5 py-0.5 text-xs rounded hover:bg-accent hover:text-accent-foreground font-medium truncate shrink-0 max-w-[140px]"
+                          className="px-1.5 py-0.5 text-xs rounded hover:bg-black/10 dark:hover:bg-white/15 hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none font-medium truncate shrink-0 max-w-[140px] transition-colors"
                           title={crumb.path}
                         >
                           {crumb.name}
@@ -908,7 +918,7 @@ export function FileStructure() {
                         setPathInput(currentPath)
                         setIsEditingPath(true)
                       }}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/15 focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none transition-colors"
                       title="Edit path directly"
                     >
                       <Edit2 className="h-3 w-3" />
@@ -919,7 +929,7 @@ export function FileStructure() {
                         e.stopPropagation()
                         handleCopyCurrentPath()
                       }}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent"
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-black/10 dark:hover:bg-white/15 focus-visible:bg-black/10 dark:focus-visible:bg-white/15 outline-none transition-colors"
                       title="Copy path"
                     >
                       {copiedPath ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
@@ -938,16 +948,16 @@ export function FileStructure() {
                 onChange={(event) =>
                   table.getColumn("name")?.setFilterValue(event.target.value)
                 }
-                className="pl-8 h-8 text-xs"
+                className="pl-8 h-8 text-xs bg-card/90 dark:bg-card/70 border-border/70 shadow-2xs"
               />
             </div>
 
             {/* View Mode Switcher */}
-            <div className="flex items-center border rounded-md p-0.5 bg-muted/30 shrink-0">
+            <div className="flex items-center border border-border/70 rounded-md p-0.5 bg-muted/40 shadow-2xs shrink-0">
               <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 shadow-2xs"
                 onClick={() => handleToggleViewMode("table")}
                 title="Table view"
               >
@@ -956,7 +966,7 @@ export function FileStructure() {
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 shadow-2xs"
                 onClick={() => handleToggleViewMode("grid")}
                 title="Grid view"
               >
@@ -999,11 +1009,11 @@ export function FileStructure() {
           <ContextMenu>
             <ContextMenuTrigger asChild>
               <div className="flex-1 min-h-0 p-3 overflow-hidden flex flex-col">
-                <div className="flex-1 min-h-0 rounded-md border bg-card overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0 rounded-md border border-border/70 bg-card/50 shadow-xs overflow-hidden flex flex-col">
                   {viewMode === "table" ? (
                     <ScrollArea className="h-full w-full">
                       <Table className="table-fixed w-full">
-                        <TableHeader className="sticky top-0 bg-card z-10">
+                        <TableHeader className="sticky top-0 bg-card/95 dark:bg-card/85 backdrop-blur-sm z-10 border-b border-border/70 shadow-2xs">
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                               {headerGroup.headers.map((header) => {
@@ -1035,7 +1045,7 @@ export function FileStructure() {
                                     data-state={row.getIsSelected() && "selected"}
                                     onDoubleClick={() => handleItemDoubleClick(row.original)}
                                     onClick={(e) => handleRowClick(row.original, row, e)}
-                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
                                   >
                                     {row.getVisibleCells().map((cell) => {
                                       const isName = cell.column.id === "name";
@@ -1216,7 +1226,7 @@ export function FileStructure() {
           </ContextMenu>
 
           {/* Bottom Status Bar */}
-          <footer className="h-7 border-t bg-muted/40 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none">
+          <footer className="h-7 border-t border-border/60 bg-muted/40 dark:bg-muted/25 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none shadow-[0_-1px_3px_rgba(0,0,0,0.02)] dark:shadow-[0_-2px_6px_rgba(0,0,0,0.25)]">
             <div className="flex items-center gap-3">
               <span>
                 {loading ? "Loading..." : `${data.length} item${data.length === 1 ? '' : 's'} (${folderCount} folder${folderCount === 1 ? '' : 's'}, ${fileCount} file${fileCount === 1 ? '' : 's'})`}

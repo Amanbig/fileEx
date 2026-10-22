@@ -221,11 +221,11 @@ async fn list_directory(path: String) -> Result<Vec<FileItem>, String> {
     let path = Path::new(&path);
     
     if !path.exists() {
-        return Err("Directory does not exist".to_string());
+        return Err(format!("Directory does not exist: '{}'", path.display()));
     }
     
     if !path.is_dir() {
-        return Err("Path is not a directory".to_string());
+        return Err(format!("Path is not a directory: '{}'", path.display()));
     }
     
     let mut items = Vec::new();
@@ -271,7 +271,14 @@ async fn list_directory(path: String) -> Result<Vec<FileItem>, String> {
                 }
             }
         }
-        Err(e) => return Err(format!("Failed to read directory: {}", e)),
+        Err(e) => {
+            let reason = match e.kind() {
+                std::io::ErrorKind::PermissionDenied => "Permission denied. You do not have permission to access this directory.",
+                std::io::ErrorKind::NotFound => "Directory not found.",
+                _ => &e.to_string(),
+            };
+            return Err(format!("Failed to open '{}': {}", path.display(), reason));
+        }
     }
     
     // Sort items: folders first, then files, both alphabetically
@@ -314,17 +321,74 @@ async fn get_home_directory() -> Result<String, String> {
     }
 }
 
+fn validate_item_name(name: &str) -> Result<String, String> {
+    let trimmed = name.trim();
+    if trimmed.is_empty() {
+        return Err("Name cannot be empty".to_string());
+    }
+    if trimmed.contains('/') || trimmed.contains('\\') {
+        return Err("Name cannot contain path separators ('/' or '\\')".to_string());
+    }
+    if trimmed.contains('\0') {
+        return Err("Name contains invalid characters".to_string());
+    }
+    #[cfg(windows)]
+    {
+        let invalid_chars = ['<', '>', ':', '"', '|', '?', '*'];
+        if trimmed.chars().any(|c| invalid_chars.contains(&c)) {
+            return Err("Name cannot contain characters (< > : \" | ? *) on Windows".to_string());
+        }
+    }
+    Ok(trimmed.to_string())
+}
+
+fn get_unique_destination_path(dest: &Path) -> std::path::PathBuf {
+    if !dest.exists() {
+        return dest.to_path_buf();
+    }
+    let parent = dest.parent().unwrap_or_else(|| Path::new(""));
+    let stem = dest.file_stem().unwrap_or_default().to_string_lossy();
+    let ext = dest.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    let mut counter = 1;
+    loop {
+        let candidate_name = if counter == 1 {
+            format!("{} (copy){}", stem, ext)
+        } else {
+            format!("{} (copy {}){}", stem, ext, counter)
+        };
+        let candidate = parent.join(&candidate_name);
+        if !candidate.exists() {
+            return candidate;
+        }
+        counter += 1;
+        if counter > 1000 {
+            return dest.to_path_buf();
+        }
+    }
+}
+
 #[tauri::command]
 async fn create_folder(path: String, name: String) -> Result<String, String> {
-    let folder_path = Path::new(&path).join(&name);
-    
+    let validated_name = validate_item_name(&name)?;
+    let base_path = Path::new(&path);
+    if !base_path.exists() || !base_path.is_dir() {
+        return Err(format!("Destination folder does not exist: '{}'", path));
+    }
+
+    let folder_path = base_path.join(&validated_name);
     if folder_path.exists() {
-        return Err("Folder already exists".to_string());
+        return Err(format!("A folder named '{}' already exists", validated_name));
     }
     
     match fs::create_dir(&folder_path) {
-        Ok(_) => Ok(format!("Folder '{}' created successfully", name)),
-        Err(e) => Err(format!("Failed to create folder: {}", e)),
+        Ok(_) => Ok(format!("Folder '{}' created successfully", validated_name)),
+        Err(e) => {
+            let reason = match e.kind() {
+                std::io::ErrorKind::PermissionDenied => "Permission denied. Check write permissions.",
+                _ => &e.to_string(),
+            };
+            Err(format!("Failed to create folder '{}': {}", validated_name, reason))
+        }
     }
 }
 
@@ -333,7 +397,16 @@ async fn delete_item(path: String) -> Result<String, String> {
     let item_path = Path::new(&path);
     
     if !item_path.exists() {
-        return Err("Item does not exist".to_string());
+        return Err("Item does not exist or has already been deleted".to_string());
+    }
+
+    // Attempt to clear readonly attribute if set
+    if let Ok(meta) = fs::metadata(&item_path) {
+        let mut perms = meta.permissions();
+        if perms.readonly() {
+            perms.set_readonly(false);
+            let _ = fs::set_permissions(&item_path, perms);
+        }
     }
     
     let result = if item_path.is_dir() {
@@ -344,12 +417,21 @@ async fn delete_item(path: String) -> Result<String, String> {
     
     match result {
         Ok(_) => Ok("Item deleted successfully".to_string()),
-        Err(e) => Err(format!("Failed to delete item: {}", e)),
+        Err(e) => {
+            let item_name = item_path.file_name().unwrap_or_default().to_string_lossy();
+            let reason = match e.kind() {
+                std::io::ErrorKind::PermissionDenied => "Permission denied. Check write permissions.",
+                std::io::ErrorKind::NotFound => "Item not found.",
+                _ => &e.to_string(),
+            };
+            Err(format!("Failed to delete '{}': {}", item_name, reason))
+        }
     }
 }
 
 #[tauri::command]
 async fn rename_item(old_path: String, new_name: String) -> Result<String, String> {
+    let validated_name = validate_item_name(&new_name)?;
     let old_path = Path::new(&old_path);
     
     if !old_path.exists() {
@@ -360,36 +442,51 @@ async fn rename_item(old_path: String, new_name: String) -> Result<String, Strin
         Some(parent) => parent,
         None => return Err("Cannot rename root directory".to_string()),
     };
+
+    if old_path.file_name().unwrap_or_default().to_string_lossy() == validated_name {
+        return Ok(format!("Name unchanged: '{}'", validated_name));
+    }
     
-    let new_path = parent.join(&new_name);
-    
+    let new_path = parent.join(&validated_name);
     if new_path.exists() {
-        return Err("An item with that name already exists".to_string());
+        return Err(format!("An item named '{}' already exists in this folder", validated_name));
     }
     
     match fs::rename(&old_path, &new_path) {
-        Ok(_) => Ok(format!("Item renamed to '{}' successfully", new_name)),
-        Err(e) => Err(format!("Failed to rename item: {}", e)),
+        Ok(_) => Ok(format!("Renamed to '{}' successfully", validated_name)),
+        Err(e) => {
+            let reason = match e.kind() {
+                std::io::ErrorKind::PermissionDenied => "Permission denied. Check permissions.",
+                _ => &e.to_string(),
+            };
+            Err(format!("Failed to rename item: {}", reason))
+        }
     }
 }
 
 #[tauri::command]
 async fn create_file(path: String, name: String) -> Result<String, String> {
+    let validated_name = validate_item_name(&name)?;
     let base_path = Path::new(&path);
     
     if !base_path.exists() || !base_path.is_dir() {
         return Err("Directory does not exist".to_string());
     }
     
-    let file_path = base_path.join(&name);
-    
+    let file_path = base_path.join(&validated_name);
     if file_path.exists() {
-        return Err("A file with that name already exists".to_string());
+        return Err(format!("A file named '{}' already exists", validated_name));
     }
     
     match fs::File::create(&file_path) {
-        Ok(_) => Ok(format!("File '{}' created successfully", name)),
-        Err(e) => Err(format!("Failed to create file: {}", e)),
+        Ok(_) => Ok(format!("File '{}' created successfully", validated_name)),
+        Err(e) => {
+            let reason = match e.kind() {
+                std::io::ErrorKind::PermissionDenied => "Permission denied. Check write permissions.",
+                _ => &e.to_string(),
+            };
+            Err(format!("Failed to create file: {}", reason))
+        }
     }
 }
 
@@ -402,39 +499,59 @@ async fn copy_items(source_paths: Vec<String>, destination_path: String) -> Resu
     }
     
     let mut copied_count = 0;
+    let mut errors: Vec<String> = Vec::new();
     
     for source_path in source_paths {
         let source = Path::new(&source_path);
         
         if !source.exists() {
-            continue; // Skip non-existent files
+            errors.push(format!("Source '{}' does not exist", source_path));
+            continue;
         }
         
         let file_name = match source.file_name() {
             Some(name) => name,
-            None => continue,
+            None => {
+                errors.push(format!("Invalid file name for '{}'", source_path));
+                continue;
+            }
         };
-        
-        let destination = dest_path.join(file_name);
-        
-        // Skip if destination already exists
-        if destination.exists() {
+
+        // Guard against copying a directory into itself or a descendant
+        if source.is_dir() && dest_path.starts_with(source) {
+            errors.push(format!("Cannot copy folder '{}' into itself or its subfolder", file_name.to_string_lossy()));
             continue;
         }
         
+        let target_dest = get_unique_destination_path(&dest_path.join(file_name));
+        
         let result = if source.is_dir() {
-            copy_dir_recursive(&source, &destination)
+            copy_dir_recursive(&source, &target_dest)
         } else {
-            fs::copy(&source, &destination).map(|_| ())
+            fs::copy(&source, &target_dest).map(|_| ())
         };
         
         match result {
             Ok(_) => copied_count += 1,
-            Err(_) => continue, // Skip failed copies
+            Err(e) => {
+                let reason = match e.kind() {
+                    std::io::ErrorKind::PermissionDenied => "Permission denied",
+                    _ => &e.to_string(),
+                };
+                errors.push(format!("'{}': {}", file_name.to_string_lossy(), reason));
+            }
         }
     }
     
-    Ok(format!("{} item(s) copied successfully", copied_count))
+    if copied_count == 0 && !errors.is_empty() {
+        return Err(format!("Failed to copy: {}", errors.join("; ")));
+    }
+    
+    if !errors.is_empty() {
+        Ok(format!("Copied {} item(s). Failed: {}", copied_count, errors.join(", ")))
+    } else {
+        Ok(format!("{} item(s) copied successfully", copied_count))
+    }
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), std::io::Error> {
@@ -464,33 +581,78 @@ async fn move_items(source_paths: Vec<String>, destination_path: String) -> Resu
     }
     
     let mut moved_count = 0;
+    let mut errors: Vec<String> = Vec::new();
     
     for source_path in source_paths {
         let source = Path::new(&source_path);
         
         if !source.exists() {
-            continue; // Skip non-existent files
+            errors.push(format!("Source '{}' does not exist", source_path));
+            continue;
         }
         
         let file_name = match source.file_name() {
             Some(name) => name,
-            None => continue,
+            None => {
+                errors.push(format!("Invalid file name for '{}'", source_path));
+                continue;
+            }
         };
-        
-        let destination = dest_path.join(file_name);
-        
-        // Skip if destination already exists
-        if destination.exists() {
+
+        // Guard against moving a directory into itself or a descendant
+        if source.is_dir() && dest_path.starts_with(source) {
+            errors.push(format!("Cannot move folder '{}' into itself or its subfolder", file_name.to_string_lossy()));
             continue;
         }
         
-        match fs::rename(&source, &destination) {
+        let destination = dest_path.join(file_name);
+        
+        if destination.exists() {
+            errors.push(format!("Cannot move '{}': An item with that name already exists in destination", file_name.to_string_lossy()));
+            continue;
+        }
+        
+        // Attempt rename; if fails (e.g. cross-device link EXDEV), fallback to copy + remove
+        let move_result = fs::rename(&source, &destination).or_else(|_| {
+            let copy_res = if source.is_dir() {
+                copy_dir_recursive(&source, &destination)
+            } else {
+                fs::copy(&source, &destination).map(|_| ())
+            };
+            match copy_res {
+                Ok(_) => {
+                    let _ = if source.is_dir() {
+                        fs::remove_dir_all(&source)
+                    } else {
+                        fs::remove_file(&source)
+                    };
+                    Ok(())
+                }
+                Err(e) => Err(e),
+            }
+        });
+        
+        match move_result {
             Ok(_) => moved_count += 1,
-            Err(_) => continue, // Skip failed moves
+            Err(e) => {
+                let reason = match e.kind() {
+                    std::io::ErrorKind::PermissionDenied => "Permission denied",
+                    _ => &e.to_string(),
+                };
+                errors.push(format!("'{}': {}", file_name.to_string_lossy(), reason));
+            }
         }
     }
     
-    Ok(format!("{} item(s) moved successfully", moved_count))
+    if moved_count == 0 && !errors.is_empty() {
+        return Err(format!("Failed to move: {}", errors.join("; ")));
+    }
+    
+    if !errors.is_empty() {
+        Ok(format!("Moved {} item(s). Failed: {}", moved_count, errors.join(", ")))
+    } else {
+        Ok(format!("{} item(s) moved successfully", moved_count))
+    }
 }
 
 #[tauri::command]

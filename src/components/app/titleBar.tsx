@@ -14,7 +14,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
-  const [appVersion, setAppVersion] = useState("0.5.4");
+  const [appVersion, setAppVersion] = useState("0.6.0");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { hasUpdate, latestVersion } = useAppSettings();
   const appWindow = getCurrentWindow();
@@ -88,12 +88,12 @@ export default function TitleBar() {
     <header
       data-tauri-drag-region
       onDoubleClick={handleToggleMaximize}
-      className="h-10 w-full select-none flex items-center justify-between px-3 border-b border-border/50 bg-background/80 backdrop-blur-sm z-50 text-foreground text-xs drag"
+      className="h-10 w-full select-none flex items-center justify-between px-3 border-b border-border/70 bg-card/80 dark:bg-card/45 backdrop-blur-md z-40 text-foreground text-xs drag shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
     >
       <div className="flex items-center gap-2 pointer-events-none select-none">
         <img src="/app-icon.png" alt="FileEx" className="h-4 w-4 rounded-sm object-contain" />
         <span className="font-semibold tracking-wide text-xs">FileEx</span>
-        <span className="text-[10px] text-muted-foreground/80 font-mono bg-muted/60 px-1.5 py-0.5 rounded border border-border/40">
+        <span className="text-[10px] text-muted-foreground/90 font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/50 shadow-2xs">
           v{appVersion}
         </span>
       </div>
@@ -102,7 +102,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="relative h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="relative h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={() => setSettingsOpen(true)}
           title={hasUpdate ? `Update Available: ${latestVersion} (Ctrl+,)` : "Settings (Ctrl+,)"}
         >
@@ -118,7 +118,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={() => appWindow.minimize()}
           title="Minimize"
         >
@@ -127,7 +127,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground"
+          className="h-7 w-8 p-0 rounded-sm hover:bg-black/10 dark:hover:bg-white/15 text-muted-foreground hover:text-foreground dark:hover:text-white focus-visible:bg-black/10 dark:focus-visible:bg-white/15 focus-visible:ring-1 focus-visible:ring-primary transition-colors"
           onClick={handleToggleMaximize}
           title={isMaximized ? "Restore Down" : "Maximize"}
         >
@@ -140,7 +140,7 @@ export default function TitleBar() {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-8 p-0 rounded-sm hover:bg-destructive hover:text-destructive-foreground text-muted-foreground transition-colors"
+          className="h-7 w-8 p-0 rounded-sm hover:!bg-red-500 hover:!text-white dark:hover:!bg-red-600 dark:hover:!text-white focus-visible:!bg-red-500 focus-visible:!text-white text-muted-foreground transition-colors"
           onClick={() => appWindow.close()}
           title="Close"
         >
