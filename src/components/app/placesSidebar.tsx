@@ -153,12 +153,12 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
   return (
     <TooltipProvider delayDuration={300}>
       <aside 
-        className={`h-full border-r bg-muted/20 flex flex-col transition-all duration-200 select-none ${
+        className={`h-full border-r border-sidebar-border bg-sidebar flex flex-col transition-all duration-200 select-none shadow-[1px_0_6px_rgba(0,0,0,0.03)] dark:shadow-[3px_0_12px_rgba(0,0,0,0.35)] z-10 ${
           isCollapsed ? "w-14" : "w-56"
         }`}
       >
         {/* Sidebar Header & Collapse Toggle */}
-        <div className="h-10 px-3 flex items-center justify-between border-b border-border/40 shrink-0">
+        <div className="h-10 px-3 flex items-center justify-between border-b border-sidebar-border/60 shrink-0">
           {!isCollapsed && (
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Explorer
@@ -205,8 +205,8 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                       onClick={() => onNavigate(place.path)}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-left ${
                         active
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          ? "bg-primary/15 text-primary font-semibold shadow-2xs"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       } ${isCollapsed ? "justify-center px-0" : ""}`}
                     >
                       {getPlaceIcon(place.icon)}
@@ -276,8 +276,8 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
                       onClick={() => onNavigate(item.path)}
                       className={`group relative w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer text-left ${
                         active
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                          ? "bg-primary/15 text-primary font-semibold shadow-2xs"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       } ${isCollapsed ? "justify-center px-0" : ""}`}
                     >
                       <Folder className="h-4 w-4 shrink-0 text-amber-500" />
@@ -319,14 +319,14 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
         </ScrollArea>
 
         {/* Sidebar Footer with Settings */}
-        <div className="p-2 border-t border-border/40 shrink-0">
+        <div className="p-2 border-t border-sidebar-border/60 bg-sidebar/80 shrink-0">
           {isCollapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={() => setSettingsOpen(true)}
-                  className="relative w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="relative w-full flex items-center justify-center p-2 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
                 >
                   <Settings className="h-4 w-4 shrink-0" />
                   {hasUpdate && (
@@ -345,7 +345,7 @@ export default function PlacesSidebar({ currentPath, onNavigate }: PlacesSidebar
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
-              className="relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="relative w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
             >
               <div className="flex items-center gap-2.5">
                 <Settings className="h-4 w-4 shrink-0" />

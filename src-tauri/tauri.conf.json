@@ -19,6 +19,7 @@
         "minHeight": 480,
         "center": true,
         "decorations": false,
+        "shadow": true,
         "titleBarStyle": "Transparent",
         "resizable": true
       }

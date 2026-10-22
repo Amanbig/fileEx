@@ -789,7 +789,7 @@ export function FileStructure() {
         {/* Main Explorer View */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Navigation and Breadcrumbs Bar */}
-          <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/20 flex-shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-muted/30 dark:bg-muted/15 flex-shrink-0 shadow-2xs">
             {/* Navigation History & Direction Buttons */}
             <div className="flex items-center gap-0.5">
               <Button 
@@ -849,7 +849,7 @@ export function FileStructure() {
             </div>
 
             {/* Breadcrumb Path Bar with Direct Edit Mode */}
-            <div className="flex-1 min-w-0 flex items-center bg-background border rounded-md px-2 h-8 shadow-xs focus-within:ring-1 focus-within:ring-ring">
+            <div className="flex-1 min-w-0 flex items-center bg-card/90 dark:bg-card/70 border border-border/70 rounded-md px-2 h-8 shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)] focus-within:ring-1 focus-within:ring-ring">
               {isEditingPath ? (
                 <div className="flex items-center w-full gap-1">
                   <Input
@@ -938,16 +938,16 @@ export function FileStructure() {
                 onChange={(event) =>
                   table.getColumn("name")?.setFilterValue(event.target.value)
                 }
-                className="pl-8 h-8 text-xs"
+                className="pl-8 h-8 text-xs bg-card/90 dark:bg-card/70 border-border/70 shadow-2xs"
               />
             </div>
 
             {/* View Mode Switcher */}
-            <div className="flex items-center border rounded-md p-0.5 bg-muted/30 shrink-0">
+            <div className="flex items-center border border-border/70 rounded-md p-0.5 bg-muted/40 shadow-2xs shrink-0">
               <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 shadow-2xs"
                 onClick={() => handleToggleViewMode("table")}
                 title="Table view"
               >
@@ -956,7 +956,7 @@ export function FileStructure() {
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="sm"
-                className="h-7 w-7 p-0"
+                className="h-7 w-7 p-0 shadow-2xs"
                 onClick={() => handleToggleViewMode("grid")}
                 title="Grid view"
               >
@@ -999,11 +999,11 @@ export function FileStructure() {
           <ContextMenu>
             <ContextMenuTrigger asChild>
               <div className="flex-1 min-h-0 p-3 overflow-hidden flex flex-col">
-                <div className="flex-1 min-h-0 rounded-md border bg-card overflow-hidden flex flex-col">
+                <div className="flex-1 min-h-0 rounded-md border border-border/70 bg-card/50 shadow-xs overflow-hidden flex flex-col">
                   {viewMode === "table" ? (
                     <ScrollArea className="h-full w-full">
                       <Table className="table-fixed w-full">
-                        <TableHeader className="sticky top-0 bg-card z-10">
+                        <TableHeader className="sticky top-0 bg-card/95 dark:bg-card/85 backdrop-blur-sm z-10 border-b border-border/70 shadow-2xs">
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                               {headerGroup.headers.map((header) => {
@@ -1216,7 +1216,7 @@ export function FileStructure() {
           </ContextMenu>
 
           {/* Bottom Status Bar */}
-          <footer className="h-7 border-t bg-muted/40 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none">
+          <footer className="h-7 border-t border-border/60 bg-muted/40 dark:bg-muted/25 px-3 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 select-none shadow-[0_-1px_3px_rgba(0,0,0,0.02)] dark:shadow-[0_-2px_6px_rgba(0,0,0,0.25)]">
             <div className="flex items-center gap-3">
               <span>
                 {loading ? "Loading..." : `${data.length} item${data.length === 1 ? '' : 's'} (${folderCount} folder${folderCount === 1 ? '' : 's'}, ${fileCount} file${fileCount === 1 ? '' : 's'})`}

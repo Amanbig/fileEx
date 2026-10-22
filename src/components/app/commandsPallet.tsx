@@ -222,7 +222,7 @@ export default function CommandsPallet({
 
     return(
         <TooltipProvider>
-            <div className="flex flex-row items-center gap-1 p-2 border-b bg-background">
+            <div className="flex flex-row items-center gap-1 p-2 border-b border-border/70 bg-card/75 dark:bg-card/40 backdrop-blur-xs shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_6px_rgba(0,0,0,0.2)] z-20">
                 {/* File operations */}
                 <div className="flex items-center gap-1">
                     <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>

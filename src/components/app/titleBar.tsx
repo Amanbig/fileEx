@@ -88,12 +88,12 @@ export default function TitleBar() {
     <header
       data-tauri-drag-region
       onDoubleClick={handleToggleMaximize}
-      className="h-10 w-full select-none flex items-center justify-between px-3 border-b border-border/50 bg-background/80 backdrop-blur-sm z-50 text-foreground text-xs drag"
+      className="h-10 w-full select-none flex items-center justify-between px-3 border-b border-border/70 bg-card/80 dark:bg-card/45 backdrop-blur-md z-40 text-foreground text-xs drag shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.35)]"
     >
       <div className="flex items-center gap-2 pointer-events-none select-none">
         <img src="/app-icon.png" alt="FileEx" className="h-4 w-4 rounded-sm object-contain" />
         <span className="font-semibold tracking-wide text-xs">FileEx</span>
-        <span className="text-[10px] text-muted-foreground/80 font-mono bg-muted/60 px-1.5 py-0.5 rounded border border-border/40">
+        <span className="text-[10px] text-muted-foreground/90 font-mono bg-muted/80 px-1.5 py-0.5 rounded border border-border/50 shadow-2xs">
           v{appVersion}
         </span>
       </div>
