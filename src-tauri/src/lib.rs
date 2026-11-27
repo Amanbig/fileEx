@@ -69,51 +69,55 @@ fn format_permissions(permissions: &fs::Permissions) -> String {
 
 #[tauri::command]
 async fn get_item_properties(path: String) -> Result<ItemProperties, String> {
-    let p = Path::new(&path);
-    if !p.exists() {
-        return Err("Item does not exist".to_string());
-    }
+    tokio::task::spawn_blocking(move || {
+        let p = Path::new(&path);
+        if !p.exists() {
+            return Err("Item does not exist".to_string());
+        }
 
-    let metadata = fs::metadata(p).map_err(|e| format!("Failed to read metadata: {}", e))?;
-    let is_dir = metadata.is_dir();
-    let name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
-    let extension = if is_dir {
-        None
-    } else {
-        p.extension().map(|e| e.to_string_lossy().to_string())
-    };
+        let metadata = fs::metadata(p).map_err(|e| format!("Failed to read metadata: {}", e))?;
+        let is_dir = metadata.is_dir();
+        let name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+        let extension = if is_dir {
+            None
+        } else {
+            p.extension().map(|e| e.to_string_lossy().to_string())
+        };
 
-    let size = if is_dir {
-        0
-    } else {
-        metadata.len()
-    };
+        let size = if is_dir {
+            0
+        } else {
+            metadata.len()
+        };
 
-    let items_count = if is_dir {
-        fs::read_dir(p).map(|entries| entries.count()).ok()
-    } else {
-        None
-    };
+        let items_count = if is_dir {
+            fs::read_dir(p).map(|entries| entries.count()).ok()
+        } else {
+            None
+        };
 
-    let date_modified = DateTime::<Utc>::from(
-        metadata.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH)
-    );
-    let date_created = metadata.created().ok().map(DateTime::<Utc>::from);
-    let is_readonly = metadata.permissions().readonly();
-    let permissions = format_permissions(&metadata.permissions());
+        let date_modified = DateTime::<Utc>::from(
+            metadata.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH)
+        );
+        let date_created = metadata.created().ok().map(DateTime::<Utc>::from);
+        let is_readonly = metadata.permissions().readonly();
+        let permissions = format_permissions(&metadata.permissions());
 
-    Ok(ItemProperties {
-        name,
-        path: p.to_string_lossy().to_string(),
-        file_type: if is_dir { "folder".to_string() } else { "file".to_string() },
-        extension,
-        size,
-        date_modified,
-        date_created,
-        is_readonly,
-        items_count,
-        permissions,
+        Ok(ItemProperties {
+            name,
+            path: p.to_string_lossy().to_string(),
+            file_type: if is_dir { "folder".to_string() } else { "file".to_string() },
+            extension,
+            size,
+            date_modified,
+            date_created,
+            is_readonly,
+            items_count,
+            permissions,
+        })
     })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -218,79 +222,76 @@ async fn get_current_directory() -> Result<String, String> {
 
 #[tauri::command]
 async fn list_directory(path: String) -> Result<Vec<FileItem>, String> {
-    let path = Path::new(&path);
-    
-    if !path.exists() {
-        return Err(format!("Directory does not exist: '{}'", path.display()));
-    }
-    
-    if !path.is_dir() {
-        return Err(format!("Path is not a directory: '{}'", path.display()));
-    }
-    
-    let mut items = Vec::new();
-    
-    match fs::read_dir(path) {
-        Ok(entries) => {
-            for (index, entry) in entries.enumerate() {
-                match entry {
-                    Ok(entry) => {
-                        let file_path = entry.path();
-                        let metadata = match entry.metadata() {
-                            Ok(meta) => meta,
-                            Err(_) => continue,
-                        };
-                        
-                        let name = entry.file_name().to_string_lossy().to_string();
-                        let is_dir = metadata.is_dir();
-                        let size = if is_dir { None } else { Some(metadata.len()) };
-                        
-                        let extension = if is_dir {
-                            None
-                        } else {
-                            file_path.extension().map(|ext| ext.to_string_lossy().to_string())
-                        };
-                        
-                        let modified = metadata.modified()
-                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                        let date_modified = DateTime::<Utc>::from(modified);
-                        
-                        let item = FileItem {
-                            id: index.to_string(),
-                            name,
-                            file_type: if is_dir { "folder".to_string() } else { "file".to_string() },
-                            size,
-                            date_modified,
-                            extension,
-                            path: file_path.to_string_lossy().to_string(),
-                        };
-                        
-                        items.push(item);
-                    }
-                    Err(_) => continue,
+    tokio::task::spawn_blocking(move || {
+        let path = Path::new(&path);
+
+        if !path.exists() {
+            return Err(format!("Directory does not exist: '{}'", path.display()));
+        }
+
+        if !path.is_dir() {
+            return Err(format!("Path is not a directory: '{}'", path.display()));
+        }
+
+        let mut items = Vec::new();
+
+        match fs::read_dir(path) {
+            Ok(entries) => {
+                for (index, entry) in entries.enumerate() {
+                    let entry = match entry {
+                        Ok(e) => e,
+                        Err(_) => continue,
+                    };
+
+                    let file_path = entry.path();
+                    let metadata = match entry.metadata() {
+                        Ok(meta) => meta,
+                        Err(_) => continue,
+                    };
+
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let is_dir = metadata.is_dir();
+                    let size = if is_dir { None } else { Some(metadata.len()) };
+
+                    let extension = if is_dir {
+                        None
+                    } else {
+                        file_path.extension().map(|ext| ext.to_string_lossy().to_string())
+                    };
+
+                    let modified = metadata
+                        .modified()
+                        .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                    let date_modified = DateTime::<Utc>::from(modified);
+
+                    items.push(FileItem {
+                        id: index.to_string(),
+                        name,
+                        file_type: if is_dir { "folder".to_string() } else { "file".to_string() },
+                        size,
+                        date_modified,
+                        extension,
+                        path: file_path.to_string_lossy().to_string(),
+                    });
                 }
             }
+            Err(e) => {
+                let reason = match e.kind() {
+                    std::io::ErrorKind::PermissionDenied => "Permission denied. You do not have permission to access this directory.",
+                    std::io::ErrorKind::NotFound => "Directory not found.",
+                    _ => &e.to_string(),
+                };
+                return Err(format!("Failed to open '{}': {}", path.display(), reason));
+            }
         }
-        Err(e) => {
-            let reason = match e.kind() {
-                std::io::ErrorKind::PermissionDenied => "Permission denied. You do not have permission to access this directory.",
-                std::io::ErrorKind::NotFound => "Directory not found.",
-                _ => &e.to_string(),
-            };
-            return Err(format!("Failed to open '{}': {}", path.display(), reason));
-        }
-    }
-    
-    // Sort items: folders first, then files, both alphabetically
-    items.sort_by(|a, b| {
-        match (a.file_type.as_str(), b.file_type.as_str()) {
-            ("folder", "file") => std::cmp::Ordering::Less,
-            ("file", "folder") => std::cmp::Ordering::Greater,
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        }
-    });
-    
-    Ok(items)
+
+        // Sort items: folders first, then files, both alphabetically (cached key avoids O(N log N) string allocations)
+        items.sort_by_cached_key(|item| (item.file_type != "folder", item.name.to_lowercase()));
+
+        Ok(items)
+    })
+    .await
+    .map_err(|e| format!("Task join error: {}", e))?
 }
 
 #[tauri::command]

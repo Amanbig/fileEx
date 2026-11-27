@@ -4,7 +4,7 @@ import React from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { FileItem } from "./fileStructure"
 import { Checkbox } from "@/components/ui/checkbox"
-import { truncateFilename } from "@/lib/utils"
+import { truncateFilename, isImageExtension, getLocalAssetUrl } from "@/lib/utils"
 import { 
   Folder, 
   File, 
@@ -19,7 +19,8 @@ import {
   Trash2, 
   ExternalLink,
   Info,
-  Terminal
+  Terminal,
+  Eye
 } from "lucide-react"
 import {
   ContextMenu,
@@ -88,6 +89,8 @@ const formatFileSize = (bytes: number | null) => {
   return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+const MAX_INLINE_THUMBNAIL_BYTES = 15 * 1024 * 1024 // 15 MB cap to keep Grid view RAM low
+
 export default function FileGrid({
   items,
   selectedPaths,
@@ -100,6 +103,13 @@ export default function FileGrid({
   onCopy,
   onCut,
 }: FileGridProps) {
+  const [failedThumbnails, setFailedThumbnails] = React.useState<Record<string, boolean>>({})
+
+  // Clear thumbnail error cache when directory items change to prevent unbounded state growth
+  React.useEffect(() => {
+    setFailedThumbnails({})
+  }, [items])
+
   const handleCardClick = (item: FileItem, e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.closest('[data-slot="checkbox"], button')) {
@@ -111,10 +121,19 @@ export default function FileGrid({
       return
     }
 
-    if (clickMode === "single" && item.file_type === "folder") {
+    if (clickMode === "single") {
       onItemDoubleClick(item)
     } else {
       onToggleSelect(item.path, e)
+    }
+  }
+
+  const handleOpenExternal = async (item: FileItem) => {
+    try {
+      const result = await invoke<string>("open_file_with_default_app", { filePath: item.path })
+      toast.success(result)
+    } catch (error) {
+      toast.error(`Failed to open file: ${error}`)
     }
   }
 
@@ -137,8 +156,12 @@ export default function FileGrid({
             <ContextMenuTrigger asChild>
               <div
                 onClick={(e) => handleCardClick(item, e)}
-                onDoubleClick={() => onItemDoubleClick(item)}
-                className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center ${
+                onDoubleClick={() => {
+                  if (clickMode === "double") {
+                    onItemDoubleClick(item)
+                  }
+                }}
+                className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center [content-visibility:auto] [contain-intrinsic-size:160px] ${
                   isSelected
                     ? "bg-primary/15 border-primary ring-2 ring-primary/40 shadow-sm"
                     : "bg-card hover:bg-card/90 border-border/70 dark:border-white/10 hover:border-border hover:shadow-md hover:-translate-y-0.5 shadow-xs transition-all duration-150"
@@ -160,15 +183,34 @@ export default function FileGrid({
                   </div>
                 </div>
 
-                {/* Center Icon */}
-                <div className="my-auto py-1">
-                  {getLargeFileIcon(item.file_type, item.extension)}
+                {/* Center Icon or Image Thumbnail */}
+                <div className="my-auto py-1 flex items-center justify-center w-full h-14 overflow-hidden">
+                  {item.file_type === "file" &&
+                  isImageExtension(item.extension) &&
+                  (item.size === null || item.size <= MAX_INLINE_THUMBNAIL_BYTES) &&
+                  !failedThumbnails[item.path] ? (
+                    <img
+                      src={getLocalAssetUrl(item.path)}
+                      alt={item.name}
+                      loading="lazy"
+                      decoding="async"
+                      draggable={false}
+                      onError={() =>
+                        setFailedThumbnails((prev) => ({ ...prev, [item.path]: true }))
+                      }
+                      className="max-h-14 max-w-full rounded object-cover shadow-xs"
+                    />
+                  ) : (
+                    getLargeFileIcon(item.file_type, item.extension)
+                  )}
                 </div>
 
                 {/* Bottom Label and Size */}
                 <div className="w-full space-y-0.5 overflow-hidden">
                   <p 
-                    className="text-xs font-medium truncate w-full px-1"
+                    className={`text-xs font-medium truncate w-full px-1 ${
+                      clickMode === "single" ? "group-hover:underline" : ""
+                    }`}
                     title={item.name}
                   >
                     {truncateFilename(item.name, 18)}
@@ -183,10 +225,24 @@ export default function FileGrid({
             {/* Right-click Context Menu */}
             <ContextMenuContent className="w-48">
               <ContextMenuItem onClick={() => onItemDoubleClick(item)}>
-                <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                {item.file_type === "folder" ? "Open Folder" : "Open"}
+                {item.file_type === "file" && isImageExtension(item.extension) ? (
+                  <Eye className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                ) : (
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                )}
+                {item.file_type === "folder"
+                  ? "Open Folder"
+                  : isImageExtension(item.extension)
+                    ? "Preview Image"
+                    : "Open"}
                 <ContextMenuShortcut>↵</ContextMenuShortcut>
               </ContextMenuItem>
+              {item.file_type === "file" && isImageExtension(item.extension) && (
+                <ContextMenuItem onClick={() => handleOpenExternal(item)}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                  Open with Default App
+                </ContextMenuItem>
+              )}
               {item.file_type === "folder" && (
                 <ContextMenuItem onClick={() => handleOpenTerminal(item.path)}>
                   <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />

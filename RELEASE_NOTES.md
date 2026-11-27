@@ -4,25 +4,25 @@ This document contains the latest release notes and history for FileEx releases.
 
 ---
 
-## 🚀 Latest Release: v0.6.1 (October 2026)
+## 🚀 Latest Release: v0.6.2 (November 2026)
 
 ### ✨ Major Highlights & Enhancements
-- **Dynamic Version Resolution & Accurate Status Reporting**:
-  - **Dynamic Crate Versioning**: Replaced hardcoded version constants in Tauri's `get_install_info` with compile-time crate version detection (`env!("CARGO_PKG_VERSION")`), eliminating the discrepancy where upgrading from `v0.5.4` still displayed `v0.5.4`.
-  - **Live UI Reflection**: TitleBar, Settings drawer, and update status hooks now dynamically reflect the exact running binary version (`v0.6.1`).
-  - **Immediate Cache Invalidation**: The background update check hook (`useAppUpdateCheck`) compares cached updates against the running version, immediately clearing update alerts when an update is applied.
-- **Synchronous Package Installation & Elevated Auth Flow**:
-  - **Awaited Polkit Execution**: Replaced unmonitored background spawning of `pkexec apt-get install -y <deb_path>` with synchronous execution (`tokio::task::spawn_blocking` + `.output()`).
-  - **Accurate Feedback**: The app remains in an explicit "Installing update..." state until authentication and package installation finish, providing clear feedback for success, cancellation, or system errors.
-- **One-Click In-App Restart Action**:
-  - **Native Tauri Restart**: Added backend `restart_app` command utilizing Tauri's `app_handle.restart()` API.
-  - **Restart Confirmation Banner**: Added an "Update Installed Successfully!" card with a prominent **"Restart FileEx Now"** button in Settings, allowing users to relaunch directly into the updated version.
+- **In-App Image Preview & Grid Thumbnails**:
+  - **Image Lightbox Modal**: Preview `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.bmp`, `.ico`, and `.avif` files directly inside FileEx with zoom controls (`+`, `-`, `0`), dimensions & size metadata, Previous/Next navigation (`←` / `→`), and a quick **Open App** button.
+  - **Live Grid Thumbnails**: Grid view cards render local image thumbnails via Tauri's `assetProtocol` (`protocol-asset`) with fallback icons.
+  - **Context Menu**: Added **Preview Image** and **Open with Default App** options for image files.
+- **Unified Click & Hover Behavior**:
+  - Fixed `settings.clickMode` (`single` vs `double`) so both **files** and **folders** behave consistently in Table and Grid views, including hover underlines and single-click opening.
+- **Memory & Resource Optimizations**:
+  - **Non-blocking Rust I/O & Faster Sorting**: Moved `list_directory` and `get_item_properties` to `tokio::task::spawn_blocking` and switched sorting to `sort_by_cached_key`.
+  - **Frontend Memory & Render Efficiency**: Added a 15 MB cap and `decoding="async"` for inline grid thumbnails, memoized table `columns`, and applied `content-visibility: auto` to Table rows and Grid cards.
 
 ---
 
 ## 📜 Release History
 
-- [v0.6.1 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v0.6.1.md) - Dynamic version resolution, synchronous deb package installation, and one-click app restart action.
+- [v0.6.2 (Latest)](file:///home/amanpreet/Documents/fileEx/releases/v0.6.2.md) - In-app image preview, unified file/folder click mode, and memory/resource optimizations.
+- [v0.6.1](file:///home/amanpreet/Documents/fileEx/releases/v0.6.1.md) - Dynamic version resolution, synchronous deb package installation, and one-click app restart action.
 - [v0.6.0](file:///home/amanpreet/Documents/fileEx/releases/v0.6.0.md) - Error boundary, robust file operations, window ambient shadow, distinct color hierarchy, hover states, and open-source standards.
 - [v0.5.4](file:///home/amanpreet/Documents/fileEx/releases/v0.5.4.md) - In-app release updater, background check badges, open terminal here, and table UI polish.
 - [v0.1.0 (Initial Release)](file:///home/amanpreet/Documents/fileEx/releases/v0.1.0.md) - Core explorer functionality, file management, clipboard operations, and themes.
