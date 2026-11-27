@@ -422,6 +422,9 @@ export function FileStructure() {
     }
   }
 
+  const handleOpenItemRef = React.useRef(handleItemDoubleClick)
+  handleOpenItemRef.current = handleItemDoubleClick
+
   // Refresh current directory
   const handleRefresh = () => {
     if (currentPath) {
@@ -499,7 +502,8 @@ export function FileStructure() {
   }
 
   // Columns definition for Table view
-  const columns: ColumnDef<FileItem>[] = [
+  // Memoize column definitions to avoid rebuilding the entire table on every render
+  const columns = React.useMemo<ColumnDef<FileItem>[]>(() => [
     {
       id: "select",
       header: ({ table }) => (
@@ -548,7 +552,7 @@ export function FileStructure() {
             onClick={(e) => {
               if (isSingleClick && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
                 e.stopPropagation()
-                handleItemDoubleClick(fileItem)
+                handleOpenItemRef.current(fileItem)
               }
             }}
           >
@@ -615,7 +619,7 @@ export function FileStructure() {
       },
       size: 90,
     },
-  ]
+  ], [settings.clickMode])
 
   const displayedData = React.useMemo(() => {
     if (settings.showHiddenFiles) return data
@@ -1068,7 +1072,7 @@ export function FileStructure() {
                                       }
                                     }}
                                     onClick={(e) => handleRowClick(row.original, row, e)}
-                                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
+                                    className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/8 transition-colors [content-visibility:auto] [contain-intrinsic-size:40px]"
                                   >
                                     {row.getVisibleCells().map((cell) => {
                                       const isName = cell.column.id === "name";

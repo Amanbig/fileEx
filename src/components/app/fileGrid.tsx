@@ -89,6 +89,8 @@ const formatFileSize = (bytes: number | null) => {
   return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+const MAX_INLINE_THUMBNAIL_BYTES = 15 * 1024 * 1024 // 15 MB cap to keep Grid view RAM low
+
 export default function FileGrid({
   items,
   selectedPaths,
@@ -102,6 +104,11 @@ export default function FileGrid({
   onCut,
 }: FileGridProps) {
   const [failedThumbnails, setFailedThumbnails] = React.useState<Record<string, boolean>>({})
+
+  // Clear thumbnail error cache when directory items change to prevent unbounded state growth
+  React.useEffect(() => {
+    setFailedThumbnails({})
+  }, [items])
 
   const handleCardClick = (item: FileItem, e: React.MouseEvent) => {
     const target = e.target as HTMLElement
@@ -154,7 +161,7 @@ export default function FileGrid({
                     onItemDoubleClick(item)
                   }
                 }}
-                className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center ${
+                className={`group relative flex flex-col items-center justify-between p-3 rounded-lg border transition-all cursor-pointer select-none aspect-square text-center [content-visibility:auto] [contain-intrinsic-size:160px] ${
                   isSelected
                     ? "bg-primary/15 border-primary ring-2 ring-primary/40 shadow-sm"
                     : "bg-card hover:bg-card/90 border-border/70 dark:border-white/10 hover:border-border hover:shadow-md hover:-translate-y-0.5 shadow-xs transition-all duration-150"
@@ -180,11 +187,13 @@ export default function FileGrid({
                 <div className="my-auto py-1 flex items-center justify-center w-full h-14 overflow-hidden">
                   {item.file_type === "file" &&
                   isImageExtension(item.extension) &&
+                  (item.size === null || item.size <= MAX_INLINE_THUMBNAIL_BYTES) &&
                   !failedThumbnails[item.path] ? (
                     <img
                       src={getLocalAssetUrl(item.path)}
                       alt={item.name}
                       loading="lazy"
+                      decoding="async"
                       draggable={false}
                       onError={() =>
                         setFailedThumbnails((prev) => ({ ...prev, [item.path]: true }))
