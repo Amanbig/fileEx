@@ -35,7 +35,8 @@ import {
   Info,
   FolderPlus,
   FilePlus,
-  Terminal
+  Terminal,
+  Eye
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -78,8 +79,9 @@ import PlacesSidebar from "./placesSidebar"
 import PropertiesModal from "./propertiesModal"
 import RenameModal from "./renameModal"
 import DeleteModal from "./deleteModal"
+import ImagePreviewModal from "./imagePreviewModal"
 import FileGrid from "./fileGrid"
-import { truncateFilename, cn } from "@/lib/utils"
+import { truncateFilename, cn, isImageExtension } from "@/lib/utils"
 import { useAppSettings } from "@/hooks/useAppSettings"
 import { toast } from "sonner"
 import { 
@@ -237,6 +239,8 @@ export function FileStructure() {
   const [renameOpen, setRenameOpen] = React.useState(false)
   const [deleteItem, setDeleteItem] = React.useState<FileItem | null>(null)
   const [deleteOpen, setDeleteOpen] = React.useState(false)
+  const [previewImageItem, setPreviewImageItem] = React.useState<FileItem | null>(null)
+  const [previewImageOpen, setPreviewImageOpen] = React.useState(false)
 
   // Canvas new folder / new file modal states
   const [newFolderDialogOpen, setNewFolderDialogOpen] = React.useState(false)
@@ -396,17 +400,25 @@ export function FileStructure() {
     }
   }
 
-  // Handle double-click on folder or file
+  // Open file externally with OS default app
+  const handleOpenExternal = async (item: FileItem) => {
+    try {
+      const result = await invoke<string>("open_file_with_default_app", { filePath: item.path })
+      toast.success(result)
+    } catch (error) {
+      toast.error(`Failed to open file: ${error}`)
+    }
+  }
+
+  // Handle opening a folder or file (respecting image preview)
   const handleItemDoubleClick = async (item: FileItem) => {
     if (item.file_type === "folder") {
       navigateToPath(item.path)
+    } else if (isImageExtension(item.extension)) {
+      setPreviewImageItem(item)
+      setPreviewImageOpen(true)
     } else {
-      try {
-        const result = await invoke<string>("open_file_with_default_app", { filePath: item.path })
-        toast.success(result)
-      } catch (error) {
-        toast.error(`Failed to open file: ${error}`)
-      }
+      await handleOpenExternal(item)
     }
   }
 
@@ -529,19 +541,20 @@ export function FileStructure() {
       cell: ({ row }) => {
         const fileItem = row.original
         const displayName = truncateFilename(fileItem.name, 48)
+        const isSingleClick = settings.clickMode === "single"
         return (
           <div 
-            className={`flex items-center gap-2 min-w-0 w-full overflow-hidden ${fileItem.file_type === "folder" ? "cursor-pointer group" : ""}`}
+            className={`flex items-center gap-2 min-w-0 w-full overflow-hidden ${isSingleClick ? "cursor-pointer group" : ""}`}
             onClick={(e) => {
-              if (fileItem.file_type === "folder" && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
+              if (isSingleClick && !e.ctrlKey && !e.metaKey && !(e as any).shiftKey) {
                 e.stopPropagation()
-                navigateToPath(fileItem.path)
+                handleItemDoubleClick(fileItem)
               }
             }}
           >
             {getFileIcon(fileItem.file_type, fileItem.extension)}
             <span 
-              className={`truncate font-medium text-sm ${fileItem.file_type === "folder" ? "group-hover:underline text-foreground" : ""}`} 
+              className={`truncate font-medium text-sm ${isSingleClick ? "group-hover:underline text-foreground" : ""}`} 
               title={fileItem.name}
             >
               {displayName}
@@ -753,12 +766,18 @@ export function FileStructure() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [table, currentPath, historyIndex, navigationHistory])
 
-  // Get filtered items for Grid View
+  // Get filtered items for Grid View and Image Preview navigation
   const filteredGridItems = React.useMemo(() => {
     return table.getRowModel().rows.map(r => r.original)
   }, [table.getRowModel().rows])
 
-  // Single click row handler: open folders directly or select files
+  const imageItems = React.useMemo(() => {
+    return filteredGridItems.filter(
+      (item) => item.file_type === "file" && isImageExtension(item.extension)
+    )
+  }, [filteredGridItems])
+
+  // Click row handler: respects settings.clickMode for both folders and files
   const handleRowClick = (item: FileItem, row: any, e: React.MouseEvent) => {
     const target = e.target as HTMLElement
     if (target.closest('[data-slot="checkbox"], [data-slot="dropdown-menu-trigger"], button')) {
@@ -770,8 +789,8 @@ export function FileStructure() {
       return
     }
 
-    if (item.file_type === "folder") {
-      navigateToPath(item.path)
+    if (settings.clickMode === "single") {
+      handleItemDoubleClick(item)
     } else {
       table.resetRowSelection()
       row.toggleSelected(true)
@@ -1043,7 +1062,11 @@ export function FileStructure() {
                                 <ContextMenuTrigger asChild>
                                   <TableRow
                                     data-state={row.getIsSelected() && "selected"}
-                                    onDoubleClick={() => handleItemDoubleClick(row.original)}
+                                    onDoubleClick={() => {
+                                      if (settings.clickMode === "double") {
+                                        handleItemDoubleClick(row.original)
+                                      }
+                                    }}
                                     onClick={(e) => handleRowClick(row.original, row, e)}
                                     className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/8 transition-colors"
                                   >
@@ -1066,10 +1089,24 @@ export function FileStructure() {
                                 </ContextMenuTrigger>
                                 <ContextMenuContent className="w-48">
                                   <ContextMenuItem onClick={() => handleItemDoubleClick(row.original)}>
-                                    <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                                    {row.original.file_type === "folder" ? "Open Folder" : "Open"}
+                                    {row.original.file_type === "file" && isImageExtension(row.original.extension) ? (
+                                      <Eye className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                                    ) : (
+                                      <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                    )}
+                                    {row.original.file_type === "folder"
+                                      ? "Open Folder"
+                                      : isImageExtension(row.original.extension)
+                                        ? "Preview Image"
+                                        : "Open"}
                                     <ContextMenuShortcut>↵</ContextMenuShortcut>
                                   </ContextMenuItem>
+                                  {row.original.file_type === "file" && isImageExtension(row.original.extension) && (
+                                    <ContextMenuItem onClick={() => handleOpenExternal(row.original)}>
+                                      <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                      Open with Default App
+                                    </ContextMenuItem>
+                                  )}
                                   {row.original.file_type === "folder" && (
                                     <ContextMenuItem onClick={() => handleOpenTerminal(row.original.path)}>
                                       <Terminal className="h-3.5 w-3.5 mr-2 text-primary" />
@@ -1325,6 +1362,15 @@ export function FileStructure() {
             onOpenChange={setDeleteOpen}
             item={deleteItem}
             onDeleted={handleRefresh}
+          />
+
+          {/* Image Preview Modal */}
+          <ImagePreviewModal
+            open={previewImageOpen}
+            onOpenChange={setPreviewImageOpen}
+            item={previewImageItem}
+            images={imageItems}
+            onSelectImage={(img) => setPreviewImageItem(img)}
           />
         </div>
       </div>
